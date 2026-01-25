@@ -1,10 +1,32 @@
 import logging
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+from typing import Any
+
+load_dotenv()
 
 # PROJECT SETTINGS
 # Path(__file__) is this file. .parent gives you the folder it's in. We resolve to get the absolute path
 PROJECT_ROOT = Path(__file__).parent.resolve()
 
+
+# Pixoo IP and Port
+def _get_env(key: str, default: str | None = None) -> str:
+    """
+    Attempts to get a value from env. If the variable is not set we raise Exception.
+    """
+    
+    value = os.getenv(key)
+
+    if value is None:
+        if default is None:
+            raise ValueError(f"CRITICAL: Missing required environment variable '{key}' in .env file.")
+        return default
+    return value
+
+PIXOO_IP = _get_env("PIXOO_IP")
+PIXOO_PORT = int(_get_env("PIXOO_PORT", "80")) # default to 80
 
 # Log settings
 LOG_FILE_NAME = "pyxoo.log"
