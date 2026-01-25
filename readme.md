@@ -17,7 +17,7 @@ TODO
 ### Phase 1: Core Engine
 
 * [x] Basic Project Structure
-* [ ] Logging system (console + file)
+* [x] Logging system (console + file)
 * [ ] Create robust connection function
 * [ ] Fonts: A generic font system
 
