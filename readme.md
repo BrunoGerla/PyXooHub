@@ -10,7 +10,10 @@ This project will turn the Pixoo into a smart dashboard.
 
 ### Installation
 
-TODO
+1. Clone the repo.
+2. Create a `.env` file with `PIXOO_IP=192.168.x.x`.
+3. Run `pip install -r requirements.txt`.
+4. Run `python app.py`.
 
 ## Roadmap & To-Do List
 
