@@ -51,7 +51,8 @@ class Font:
                 pixel_values: tuple[int, int, int, int] = img.getpixel((x, y)) # type: ignore
                 r, g, b, a = pixel_values
 
-                if a > 0:
+                is_not_black = (r > 0 or g > 0 or b > 0)
+                if is_not_black:
                     visible_pixels.append((x, y))
 
         return {
