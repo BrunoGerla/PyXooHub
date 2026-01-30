@@ -4,6 +4,7 @@ from requests.exceptions import RequestException
 import base64
 
 import config
+from engine.font import Font
 from utils.logger import get_logger, configure_logging
 
 
@@ -66,6 +67,37 @@ class PixooDriver:
         index = (y * self.width + x) * 3
         self.buffer[index : index+3] = (r, g, b)
         return
+    
+    def draw_text(self, text: str, x: int, y: int, font: Font, color: tuple[int, int, int], character_spacing: int = 1, space_size: int = 4):
+        """
+        Draws a string of text starting at (x, y).
+
+        Args:
+            text: The string to draw
+            x: Starting X position
+            y: Starting Y position
+            font: An instance of the Font class
+            rgb: Color tuple (R, G, B)
+            character_spacing: Pixels between characters (default 1)
+            space_size: Number for pixels used to represent a space
+        """
+        cursor_x : int = x
+
+        for char in text:
+            if char == " ":
+                cursor_x += space_size
+                continue
+
+            glyph = font.get_glyph(char)
+
+            if glyph is None:
+                logger.warning(f"Char {char} not found in {font}")
+                continue
+
+            for px, py in glyph["pixels"]:
+                self.set_pixel(cursor_x + px, y + py, color)
+
+            cursor_x += glyph["width"] + character_spacing
 
     def fill(self, rgb: tuple[int, int, int]):
         """Fills the screen with one color"""
@@ -146,10 +178,13 @@ class PixooDriver:
 
 
 if __name__ == "__main__":
+    small_font = Font(str(config.ASSETS_PATH / "small"))
     print("starting")
     pixoo = PixooDriver()
 
     WHITE = (255, 255, 255)
     pixoo.clear()
     pixoo.set_pixel(10, 10, WHITE)
+    pixoo.draw_text("TEST", 1, 20, small_font, (255, 0 , 0), space_size=1)
+    pixoo.draw_text("11:53", 1, 26, small_font, (0, 255, 0))
     pixoo.push()
