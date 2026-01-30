@@ -61,5 +61,15 @@ class Font:
             "pixels": visible_pixels
         }
 
-    def get_glyph(self, char):
-        return self._glyphs.get(char)
+    def get_glyph(self, char) -> GlyphData | None:
+        """
+        Retrieves the glyph data for a character.
+        If the character is missing, falls back to '?' (ASCII 63)
+        If '?' is also missing, return None.
+        """
+        if char in self._glyphs:
+            return self._glyphs.get(char)
+        
+        logger.warning(f"Warning: Glyph for '{char}' not found. Using fallback.")
+
+        return self._glyphs.get("?")

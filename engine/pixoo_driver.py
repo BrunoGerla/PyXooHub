@@ -85,7 +85,7 @@ class PixooDriver:
 
         for char in text:
             if char == " ":
-                cursor_x += 4
+                cursor_x += space_size
                 continue
 
             glyph = font.get_glyph(char)
@@ -185,5 +185,6 @@ if __name__ == "__main__":
     WHITE = (255, 255, 255)
     pixoo.clear()
     pixoo.set_pixel(10, 10, WHITE)
-    pixoo.draw_text("A", 10, 20, small_font, (255, 0 , 0))
+    pixoo.draw_text("TEST", 1, 20, small_font, (255, 0 , 0), space_size=1)
+    pixoo.draw_text("11:53", 1, 26, small_font, (0, 255, 0))
     pixoo.push()
