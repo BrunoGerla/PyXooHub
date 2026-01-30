@@ -18,7 +18,7 @@ TODO
 
 * [x] Basic Project Structure
 * [x] Logging system (console + file)
-* [ ] Create robust connection function
+* [x] Create robust connection function
 * [ ] Fonts: A generic font system
 
 ### Phase 2: The UI engine
