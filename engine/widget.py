@@ -3,7 +3,7 @@ from engine.pixoo_driver import PixooDriver
 
 class Widget(ABC):
     """
-    Abastract Base Class for all widgets.
+    Abstract Base Class for all widgets.
     Enforces that every widget MUST have a draw() method.
     """
     def __init__(self, x: int, y: int):
