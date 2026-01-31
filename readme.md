@@ -17,15 +17,22 @@ This project will turn the Pixoo into a smart dashboard.
 
 ## Roadmap & To-Do List
 
-### Phase 1: Core Engine
+### Phase 1: Core Engine [COMPLETE]
 
 * [x] Basic Project Structure
 * [x] Logging system (console + file)
 * [x] Create robust connection function
 * [x] Fonts: A generic font system
 
-### Phase 2: The UI engine
+### Phase 2: The UI engine [IN PROGRESS]
 
-* [ ] Base {Widget} class
-* [ ] Text widget class
-* [ ] Container: A widget that holds other widgets (for centering/grouping)
+* [x] Base {Widget} class
+* [ ] **Resources**: Add resources.py where we can store fonts centrally
+* [ ] **TextWidget**: A simple widget for static labels
+* [ ] **MediumFont**: Add a medium sized (7 high?) font.
+* [ ] **ImageWidget**: Support for drawing icons
+* [ ] **Container**: A widget that holds other widgets (for centering/grouping)
+
+### Phase 3: Data Layer (Inplementing Data and API's)
+
+* [ ] **Update Interval**: Modify widgets to have a 'update()' method seperate from 'draw()'
