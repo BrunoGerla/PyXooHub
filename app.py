@@ -4,6 +4,7 @@ import config
 from engine.pixoo_driver import PixooDriver
 from engine.font import Font
 from widgets.clock import ClockWidget
+from resources import small_font
 
 from utils.logger import get_logger, configure_logging
 
@@ -15,8 +16,6 @@ def main():
 
     # initiate the driver
     driver = PixooDriver()
-
-    small_font = Font(str(config.ASSETS_PATH / "small"))
 
     clock = ClockWidget(x=2, y=10, font=small_font, color=(0, 255, 0))
 
