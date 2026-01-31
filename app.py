@@ -5,7 +5,7 @@ from engine.pixoo_driver import PixooDriver
 from engine.font import Font
 from widgets.clock import ClockWidget
 from widgets.text import TextWidget
-from resources import small_font
+import resources
 
 from utils.logger import get_logger, configure_logging
 
@@ -19,9 +19,9 @@ def main():
     driver = PixooDriver()
 
     # SETUP WIDGETS
-    label = TextWidget("TIME:", x=2, y=3, font=small_font, color= (200, 200, 200))
+    label = TextWidget("TIME:", x=2, y=3, font=resources.small_font, color= (200, 200, 200))
 
-    clock = ClockWidget(x=2, y=10, font=small_font, color=(0, 255, 0))
+    clock = ClockWidget(x=2, y=10, font=resources.medium_01, color=(0, 255, 0))
 
     logger.info("Engine Loop Started. Press Ctrl+C to stop.")
 
