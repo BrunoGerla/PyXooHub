@@ -45,6 +45,11 @@ def configure_logging(
     """
     Sets up the ROOT logger.
     """
+
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("PIL").setLevel(logging.WARNING)
+
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
