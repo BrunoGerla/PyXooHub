@@ -6,11 +6,21 @@ class TextWidget(Widget):
     """
     A widget that displays a static string of text.
     """
-    def __init__(self, text: str, x: int, y: int, font: Font, color: tuple[int, int, int] = (255, 255, 255)):
+    def __init__(
+            self, 
+            text: str, 
+            x: int, 
+            y: int, 
+            font: Font, 
+            color: tuple[int, int, int] = (255, 255, 255), 
+            character_spacing: int = 1, 
+            space_size: int = 4):
         super().__init__(x, y)
         self.text = text
         self.font = font
         self.color = color
+        self.char_spacing = character_spacing
+        self.space_size = space_size
 
     def draw(self, driver: PixooDriver):
         driver.draw_text(
@@ -18,5 +28,7 @@ class TextWidget(Widget):
             x=self.x,
             y=self.y,
             font=self.font,
-            color=self.color
+            color=self.color,
+            character_spacing=self.char_spacing,
+            space_size=self.space_size
         )

@@ -23,6 +23,7 @@ def main():
     label = TextWidget("PYXOOHUB:", x=2, y=3, font=resources.small_font, color= (200, 200, 200))
     clock = ClockWidget(x=2, y=10, font=resources.medium_01, color=(0, 255, 0))
     date = DateWidget(x=2, y=19, font=resources.small_font, color=(200, 200, 200))
+    test = TextWidget("abcdefghijkl", x=2, y=26, font=resources.medium_01, color=(200, 50, 50), space_size=2)
 
     logger.info("Engine Loop Started. Press Ctrl+C to stop.")
 
@@ -35,6 +36,7 @@ def main():
             label.draw(driver)
             clock.draw(driver)
             date.draw(driver)
+            test.draw(driver)
             driver.push()
             # ----
 
