@@ -38,7 +38,7 @@ LOG_FILE_NAME = "pyxoo.log"
 LOG_FILE_PATH = PROJECT_ROOT / "logs" / LOG_FILE_NAME
 
 FILE_LEVEL = logging.DEBUG
-CONSOLE_LEVEL = logging.DEBUG
+CONSOLE_LEVEL = logging.INFO
 
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
