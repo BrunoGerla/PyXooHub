@@ -7,18 +7,40 @@ class BarWidget(Widget):
     def __init__(self, x: int, y: int, width: int, height: int, percentage: float = 0.0,
                  color: tuple[int, int, int] = (0, 255, 0),
                  outline: bool = True,
-                 outline_color: tuple[int, int, int] = (255, 255, 255)):
+                 outline_color: tuple[int, int, int] = (255, 255, 255),
+                 color_map: dict[float, tuple[int, int, int]] | None = None):
+        """
+        Args:
+            color_map: A dictionary of {upper_limit: color_tuple}.
+        """
         super().__init__(x, y)
         self.width = width
         self.height = height
         self.percentage = max(0.0, min(1.0, percentage)) # Clamp between 0.0 and 1.0
-        self.color = color
+        self.default_color = color
+        self.current_color = color
         self.outline = outline
         self.outline_color = outline_color
+
+        self.color_map = dict(sorted(color_map.items())) if color_map else None
 
     def set_percentage(self, percentage: float):
         """Updates the bar's percentage (0.0 to 1.0)"""
         self.percentage = max(0.0, min(1.0, percentage))
+        self._update_color()
+
+    def _update_color(self):
+        """Determines the current color based on the color_map."""
+        if not self.color_map:
+            self.current_color = self.default_color
+            return
+        
+        for threshold, color in self.color_map.items():
+            if self.percentage <= threshold:
+                self.current_color = color
+                return
+            
+        self.current_color = self.default_color
 
     def draw(self, driver: PixooDriver):
         # determine orientation. If square, we still want to load bottom to top.
@@ -60,7 +82,7 @@ class BarWidget(Widget):
                 # Calculate Y: Bottom of fill area - current offset
                 pixel_y = (fill_y + fill_h - 1) - py
                 for px in range(fill_w):
-                    driver.set_pixel(fill_x + px, pixel_y, self.color)
+                    driver.set_pixel(fill_x + px, pixel_y, self.current_color)
 
         else:
             # Horizontal: Fill from left to right
@@ -69,4 +91,4 @@ class BarWidget(Widget):
             for px in range(filled_width):
                 pixel_x = fill_x + px
                 for py in range(fill_h):
-                    driver.set_pixel(pixel_x, fill_y + py, self.color)
+                    driver.set_pixel(pixel_x, fill_y + py, self.current_color)

@@ -20,6 +20,19 @@ def main():
     # initiate the driver
     driver = PixooDriver()
 
+    # Define Colors
+    RED = (255, 0, 0)
+    AMBER = (255, 160, 0)
+    GREEN = (0, 255, 0)
+    CYAN = (0, 255, 255)
+
+    BATTERY_THEME = {
+        0.15: RED,
+        0.30: AMBER,
+        0.90: GREEN,
+        1.00: CYAN
+    }
+
     # SETUP WIDGETS
     label = TextWidget("PYXOOHUB:", x=2, y=3, font=resources.small_font, color= (200, 200, 200))
     clock = ClockWidget(x=2, y=10, font=resources.medium_01, color=(0, 255, 0))
@@ -27,7 +40,9 @@ def main():
     test = TextWidget("abcdefghijkl", x=2, y=26, font=resources.medium_01, color=(200, 50, 50), space_size=2)
     
     # Mouse %
-    mouse_bar = BarWidget(56, 54, width=3, height=7, percentage=0.7, outline_color=(200, 200, 200))
+    mouse_bar = BarWidget(56, 54, width=3, height=7, percentage=0.7
+                          , outline_color=(200, 200, 200),
+                          color_map=BATTERY_THEME)
 
     logger.info("Engine Loop Started. Press Ctrl+C to stop.")
 
@@ -45,15 +60,6 @@ def main():
             
             # mouse_text.draw(driver)
             mouse_bar.set_percentage(p)
-
-            if p < 0.15:
-                mouse_bar.color = (255, 0, 0)
-            elif p < 0.30:
-                mouse_bar.color = (255, 160, 0)
-            elif p > 0.9:
-                mouse_bar.color = (0, 255, 255)
-            else:
-                mouse_bar.color = (0, 255, 0)
 
             mouse_bar.draw(driver)
             driver.push()
