@@ -1,23 +1,18 @@
 from datetime import datetime
-from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
 from engine.font import Font
+from widgets.text import TextWidget
 
-class DateWidget(Widget):
-    def __init__(self, x: int, y: int,  font: Font, date_format: str = "%d-%m-%Y", color: tuple[int, int, int] = (255, 255, 255)):
-        super().__init__(x, y)
-        self.font = font
-        self.color = color
+class DateWidget(TextWidget):
+    def __init__(self, x: int, y: int, font: Font, 
+            color:tuple[int, int, int] = (255, 255, 255),
+            date_format: str = "%d-%m-%Y",
+            **kwargs):
+        super().__init__(text="", x=x, y=y, font=font, color=color, **kwargs)
+        
         self.date_format = date_format
+        self.update(0.0)
 
-    def draw(self, driver: PixooDriver):
+    def update(self, dt: float):
         now = datetime.now()
-        date_str = now.strftime(self.date_format)
-
-        driver.draw_text(
-            text=date_str,
-            x=self.x,
-            y=self.y,
-            font=self.font,
-            color=self.color
-        )
+        self.text = now.strftime(self.date_format)

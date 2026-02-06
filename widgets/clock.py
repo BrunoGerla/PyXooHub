@@ -1,22 +1,18 @@
 from datetime import datetime
-from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
 from engine.font import Font
+from widgets.text import TextWidget
 
-class ClockWidget(Widget):
-    def __init__(self, x: int, y: int, font: Font, color:tuple[int, int, int] = (255, 255, 255)):
-        super().__init__(x, y)
-        self.font = font
-        self.color = color
+class ClockWidget(TextWidget):
+    def __init__(self, x: int, y: int, font: Font, 
+                 color:tuple[int, int, int] = (255, 255, 255),
+                 time_format: str = "%H:%M:%S",
+                 **kwargs):
+        super().__init__(text="", x=x, y=y, font=font, color=color, **kwargs)
 
-    def draw(self, driver: PixooDriver):
+        self.format = time_format
+        self.update(0.0)
+
+    def update(self, dt: float):
         now = datetime.now()
-        time_str = now.strftime("%H:%M:%S")
-
-        driver.draw_text(
-            text=time_str,
-            x=self.x,
-            y=self.y,
-            font=self.font,
-            color=self.color
-        )
+        self.text = now.strftime(self.format)

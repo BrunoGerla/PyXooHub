@@ -14,15 +14,23 @@ class TextWidget(Widget):
             font: Font, 
             color: tuple[int, int, int] = (255, 255, 255), 
             character_spacing: int = 1, 
-            space_size: int = 4):
+            space_size: int = 4,
+            **kwargs):
         super().__init__(x, y)
+
         self.text = text
         self.font = font
         self.color = color
         self.char_spacing = character_spacing
         self.space_size = space_size
 
+    def update(self, dt: float):
+        pass
+
     def draw(self, driver: PixooDriver):
+        """
+        Renders the current value of self.text.
+        """
         driver.draw_text(
             text=self.text,
             x=self.x,

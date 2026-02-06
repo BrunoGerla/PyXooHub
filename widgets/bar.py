@@ -29,6 +29,9 @@ class BarWidget(Widget):
         self.percentage = max(0.0, min(1.0, percentage))
         self._update_color()
 
+    def update(self, dt: float):
+        pass
+
     def _update_color(self):
         """Determines the current color based on the color_map."""
         if not self.color_map:
