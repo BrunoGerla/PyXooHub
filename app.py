@@ -27,7 +27,6 @@ def main():
     test = TextWidget("abcdefghijkl", x=2, y=26, font=resources.medium_01, color=(200, 50, 50), space_size=2)
     
     # Mouse %
-    mouse_text = TextWidget("MOUSE:", x=32, y=54, font=resources.small_font, color=(200, 200, 200))
     mouse_bar = BarWidget(56, 54, width=3, height=7, percentage=0.7, outline_color=(200, 200, 200))
 
     logger.info("Engine Loop Started. Press Ctrl+C to stop.")
