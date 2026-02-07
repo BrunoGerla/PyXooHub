@@ -21,6 +21,8 @@ class PixooDriver:
         self.base_url = f"http://{self.ip}:{self.port}/post"
         self.is_connected: bool = False
 
+        self.session = requests.Session()
+
         # graphics engine
         self.width: int = 64
         self.height: int = 64
@@ -109,14 +111,12 @@ class PixooDriver:
         if not self.is_connected:
             logger.warning("Cannot push frame: Device disconnected.")
             return
-        
-        try:
-            requests.post(self.base_url, json={"Command": "Draw/ResetHttpGifId"}, timeout=self.timeout)
-        except RequestException:
-            logger.warning("Failed to send Reset command (Device might lag but still accept frame)")
 
-        
-        self.frame_count += 1
+        try:
+            self.session.post(self.base_url, json={"Command": "Draw/ResetHttpGifId"}, timeout=self.timeout)
+        except Exception:
+            pass
+
         pixel_data = base64.b64encode(bytes(self.buffer)).decode('utf-8')
 
         payload = {
@@ -125,13 +125,13 @@ class PixooDriver:
             "PicWidth": self.width,
             "PicOffset": 0,
             "PicID": 1,
-            "PicSpeed": 1000,
+            "PicSpeed": 10,
             "PicData": pixel_data
         }
 
         try:
             logger.debug("Pushing request!")
-            requests.post(self.base_url, json=payload, timeout=config.PIXOO_TIMEOUT)
+            self.session.post(self.base_url, json=payload, timeout=config.PIXOO_TIMEOUT)
         except Exception as e:
             logger.error(f"Push failed: {e}")
             self.is_connected = False
