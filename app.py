@@ -6,6 +6,7 @@ from engine.font import Font
 from widgets.datetime import DateTimeWidget
 from widgets.text import TextWidget
 from widgets.bar import BarWidget
+from engine.widget import Widget
 
 from providers.mouse_battery.razer_synapse import RazerSynapseProvider
 import resources
@@ -54,7 +55,7 @@ def main():
     
     mouse_text = TextWidget("00%", 49, 55, font=resources.small_font, color=(200, 200, 200))
 
-    widgets = [title, clock, date, mouse_bar, mouse_text]
+    widgets: list[Widget] = [title, clock, date, mouse_bar, mouse_text]
 
     logger.info("Engine Loop Started. Press Ctrl+C to stop.")
 
