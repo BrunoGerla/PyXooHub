@@ -8,7 +8,7 @@ load_dotenv()
 
 # PROJECT SETTINGS
 # Path(__file__) is this file. .parent gives you the folder it's in. We resolve to get the absolute path
-PROJECT_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 ASSETS_PATH = PROJECT_ROOT / "assets" / "fonts"
 

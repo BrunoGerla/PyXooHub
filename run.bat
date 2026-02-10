@@ -4,6 +4,6 @@ cd /d "%~dp0"
 :: Activate the virtual environment
 call .venv/Scripts/activate.bat
 
-python app.py
+python src/app.py
 
 pause
