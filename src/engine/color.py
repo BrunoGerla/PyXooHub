@@ -139,3 +139,5 @@ class Colors:
     WARNING = AMBER
     DANGER = Color(220, 20, 60)
     SUCCESS = Color(50, 205, 50)
+
+ColorValue = Color | tuple[int, int, int] | str

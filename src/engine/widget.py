@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from engine.pixoo_driver import PixooDriver
-from engine.color import Color, Colors
+from engine.color import Color, Colors, ColorValue
 from utils.logger import get_logger
 
 logger = get_logger("Widget")
@@ -10,7 +10,7 @@ class Widget(ABC):
     Abstract Base Class for all widgets.
     Enforces that every widget must have an update and draw method.
     """
-    def __init__(self, x: int, y: int, color: tuple[int, int ,int] | Color = Colors.WHITE):
+    def __init__(self, x: int, y: int, color: ColorValue = Colors.WHITE):
         self.x = x
         self.y = y
         
