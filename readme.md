@@ -35,4 +35,6 @@ This project will turn the Pixoo into a smart dashboard.
 
 ### Phase 3: Data Layer (Inplementing Data and API's)
 
-* [ ] **Update Interval**: Modify widgets to have a 'update()' method seperate from 'draw()'
+* [x] **Update Interval**: Modify widgets to have a 'update()' method seperate from 'draw()'
+* [ ] **Dashboard Class**: Splitting the dashboard logic and the app.
+* [ ] **Optimize**: Add async pushing.

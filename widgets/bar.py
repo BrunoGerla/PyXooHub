@@ -1,14 +1,30 @@
 import math
+from typing import Callable, Any
 
 from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
 
+from utils.logger import get_logger
+
+logger = get_logger("BarWidget")
+
 class BarWidget(Widget):
-    def __init__(self, x: int, y: int, width: int, height: int, percentage: float = 0.0,
+    """
+    A widget that displays a progress bar.
+    Can be static (fixed percentage) or dynamic (polling a data_source).
+    """
+    def __init__(self, 
+                 x: int, 
+                 y: int, 
+                 width: int, 
+                 height: int, 
+                 percentage: float = 0.0,
                  color: tuple[int, int, int] = (0, 255, 0),
                  outline: bool = True,
                  outline_color: tuple[int, int, int] = (255, 255, 255),
-                 color_map: dict[float, tuple[int, int, int]] | None = None):
+                 color_map: dict[float, tuple[int, int, int]] | None = None,
+                 data_source: Callable[[], Any] | None = None,
+                 update_interval: float = 1.0):
         """
         Args:
             color_map: A dictionary of {upper_limit: color_tuple}.
@@ -16,18 +32,54 @@ class BarWidget(Widget):
         super().__init__(x, y)
         self.width = width
         self.height = height
-        self.percentage = max(0.0, min(1.0, percentage)) # Clamp between 0.0 and 1.0
+        self.percentage = self._clamp_percentage(percentage)
+
         self.default_color = color
         self.current_color = color
         self.outline = outline
         self.outline_color = outline_color
-
         self.color_map = dict(sorted(color_map.items())) if color_map else None
+
+        self.data_source = data_source
+        self.update_interval = update_interval
+        self.timer = self.update_interval
+
+        if self.data_source:
+            self.update(0.0)
+        else:
+            self._update_color()
 
     def set_percentage(self, percentage: float):
         """Updates the bar's percentage (0.0 to 1.0)"""
-        self.percentage = max(0.0, min(1.0, percentage))
+        self.percentage = self._clamp_percentage(percentage)
         self._update_color()
+
+    def update(self, dt: float):
+        if self.data_source is None:
+            return
+        
+        self.timer += dt
+
+        if self.timer >= self.update_interval:
+            value = self._fetch_data()
+
+            if value is not None:
+                self.set_percentage(value)
+            else:
+                self.percentage = 1
+                self.current_color = (255, 0, 0)
+
+            self.timer -= self.update_interval
+
+    def _fetch_data(self) -> float | None:
+        if self.data_source is None:
+            return
+        
+        try:
+            return float(self.data_source())
+        except Exception as e:
+            logger.error(f"Failed to fetch data for BarWidget: {e}")
+            return None
 
     def _update_color(self):
         """Determines the current color based on the color_map."""
@@ -92,3 +144,6 @@ class BarWidget(Widget):
                 pixel_x = fill_x + px
                 for py in range(fill_h):
                     driver.set_pixel(pixel_x, fill_y + py, self.current_color)
+
+    def _clamp_percentage(self, value: float) -> float:
+        return min(1, max(0, value))
