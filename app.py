@@ -37,23 +37,35 @@ def main():
 
     # SETUP INTERVALS
     FRAME_INTERVAL = 0.5 # time between frames
-    BATTERY_INTERVAL = 30.0 # time between updates on the battery
-
-    battery_timer = BATTERY_INTERVAL
 
     # SETUP PROVIDERS
     mouse = RazerSynapseProvider()
 
+    def get_mouse_text():
+        """Formats floats like 0.75 to strings like 75%"""
+        val = mouse.get_battery_percentage()
+        return f"{int(val*100)}%"
+
     # SETUP WIDGETS
     title = TextWidget(text="PYXOOHUB:", x=2, y=3, font=resources.medium_01, color= (255, 255, 255))
+
     clock = DateTimeWidget(x=2, y=12, font=resources.medium_01, color=(0, 255, 0), format="%H:%M:%S")
     date = DateTimeWidget(x=2, y=20, color=(200, 200, 200), format="%d-%m-%Y", update_interval=60.0)
 
-    mouse_bar = BarWidget(44, 54, width=3, height=7, percentage=0.7
-                          , outline_color=(200, 200, 200),
-                          color_map=BATTERY_THEME)
+    mouse_bar = BarWidget(x=44,
+                          y=54,
+                          width=3,
+                          height=7,
+                          outline_color=(200, 200, 200),
+                          color_map=BATTERY_THEME,
+                          data_source=mouse.get_battery_percentage,
+                          update_interval=30.0)
     
-    mouse_text = TextWidget(text="00%", x=49, y=55, font=resources.small_font, color=(200, 200, 200))
+    mouse_text = TextWidget(x=49,
+                            y=55,
+                            color=(200, 200, 200),
+                            data_source=get_mouse_text,
+                            update_interval=30.0)
 
     widgets: list[Widget] = [title, clock, date, mouse_bar, mouse_text]
 
@@ -67,14 +79,6 @@ def main():
             dt = current_time - last_time
             last_time = current_time
 
-            # Update Widgets
-            battery_timer += dt
-            if battery_timer >= BATTERY_INTERVAL:
-                level = mouse.get_battery_percentage()
-                mouse_bar.set_percentage(level)
-                mouse_text.text = f"{int(level * 100)}%"
-                battery_timer = 0
-
             for widget in widgets:
                 logger.debug(dt)
                 widget.update(dt)
@@ -85,7 +89,6 @@ def main():
 
             # Push to Pixoo
             driver.push()
-
 
             now = time.time()
             sleep_time = FRAME_INTERVAL - (now % FRAME_INTERVAL)
