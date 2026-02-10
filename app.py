@@ -45,15 +45,15 @@ def main():
     mouse = RazerSynapseProvider()
 
     # SETUP WIDGETS
-    title = TextWidget("PYXOOHUB:", x=2, y=3, font=resources.medium_01, color= (255, 255, 255))
+    title = TextWidget(text="PYXOOHUB:", x=2, y=3, font=resources.medium_01, color= (255, 255, 255))
     clock = DateTimeWidget(x=2, y=12, font=resources.medium_01, color=(0, 255, 0), format="%H:%M:%S")
-    date = DateTimeWidget(x=2, y=20, font=resources.small_font, color=(200, 200, 200), format="%d-%m-%Y", update_interval=60.0)
+    date = DateTimeWidget(x=2, y=20, color=(200, 200, 200), format="%d-%m-%Y", update_interval=60.0)
 
     mouse_bar = BarWidget(44, 54, width=3, height=7, percentage=0.7
                           , outline_color=(200, 200, 200),
                           color_map=BATTERY_THEME)
     
-    mouse_text = TextWidget("00%", 49, 55, font=resources.small_font, color=(200, 200, 200))
+    mouse_text = TextWidget(text="00%", x=49, y=55, font=resources.small_font, color=(200, 200, 200))
 
     widgets: list[Widget] = [title, clock, date, mouse_bar, mouse_text]
 
