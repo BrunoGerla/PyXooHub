@@ -30,6 +30,7 @@ This project will turn the Pixoo into a smart dashboard.
 * [x] **Resources**: Add resources.py where we can store fonts centrally
 * [x] **TextWidget**: A simple widget for static labels
 * [x] **MediumFont**: Add a medium sized (7 high?) font.
+* [ ] **Colors**: Centralized color class.
 * [ ] **ImageWidget**: Support for drawing icons
 * [ ] **Container**: A widget that holds other widgets (for centering/grouping)
 
