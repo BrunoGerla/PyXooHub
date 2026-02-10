@@ -116,3 +116,26 @@ class Color:
             self._clamp_rgb(int(self.g + (other.g - self.g) * factor)),
             self._clamp_rgb(int(self.b + (other.b - self.b) * factor))
         )
+    
+class Colors:
+    # Basic
+    BLACK = Color(0, 0, 0)
+    WHITE = Color(255, 255, 255)
+    
+    # Primaries
+    RED = Color(255, 0, 0)
+    GREEN = Color(0, 255, 0)
+    BLUE = Color(0, 0, 255)
+    
+    # Secondary
+    YELLOW = Color(255, 255, 0)
+    CYAN = Color(0, 255, 255)
+    MAGENTA = Color(255, 0, 255)
+
+    # Other
+    AMBER = (255, 160, 0)
+    
+    # UI Specific
+    WARNING = AMBER
+    DANGER = Color(220, 20, 60)
+    SUCCESS = Color(50, 205, 50)
