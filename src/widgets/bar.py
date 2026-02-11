@@ -15,10 +15,10 @@ class BarWidget(Widget):
     Can be static (fixed percentage) or dynamic (polling a data_source).
     """
     def __init__(self, 
-                 x: int, 
-                 y: int, 
                  width: int, 
-                 height: int, 
+                 height: int,
+                 x: int = 0, 
+                 y: int = 0,  
                  percentage: float = 0.0,
                  color: ColorValue = Colors.WHITE,
                  outline: bool = True,

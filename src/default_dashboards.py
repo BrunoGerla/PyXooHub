@@ -3,9 +3,11 @@ from engine.color import Colors, Color
 import resources
 
 # Widgets
+from widgets.container import VerticalContainer, HorizontalContainer
 from widgets.text import TextWidget
 from widgets.datetime import DateTimeWidget
 from widgets.bar import BarWidget
+from widgets.spacer import Spacer
 
 def build_cyberpunk_dashboard() -> Dashboard:
     """
@@ -37,3 +39,75 @@ def build_cyberpunk_dashboard() -> Dashboard:
         background_color=bg_color,
         widgets=widgets
     )
+
+class LayoutTestDashboard(Dashboard):
+    def __init__(self):
+        super().__init__()
+
+        # --- 1. CREATE WIDGETS (The "Ingredients") ---
+        # We define them as 'self.' so we can update their text later!
+        
+        # Top Label
+        self.header_label = TextWidget(text="SYSTEM", color=Colors.WHITE)
+        
+        # The 3 Status Widgets
+        self.cpu_label = TextWidget(text="CPU: 12%", color=Colors.GREEN)
+        self.ram_label = TextWidget(text="RAM: 45%", color=Colors.YELLOW)
+        self.net_label = TextWidget(text="NET: UP", color=Colors.CYAN)
+
+        # Footer items
+        self.footer_left = TextWidget(text="A", color=Colors.RED)
+        self.footer_right = TextWidget(text="B", color=Colors.RED)
+
+        # Spacers (We can make them on the fly or define them here)
+        main_spacer = Spacer()
+        footer_spacer = Spacer()
+
+
+        # --- 2. ASSEMBLE CONTAINERS (The "Recipe") ---
+
+        # The Header Row
+        header_container = HorizontalContainer(
+            height=10,
+            width=64,
+            color=Colors.BLUE,
+            align="center", # Vertically center the text
+            children=[self.header_label]
+        )
+
+        # The Footer Row (Left text, Spacer, Right text)
+        footer_container = HorizontalContainer(
+            height=12,
+            width=64,
+            color=Color(200, 200, 200),
+            align="center",
+            children=[
+                self.footer_left,
+                footer_spacer, # Pushes B to the right
+                self.footer_right
+            ]
+        )
+
+        # The Main Vertical Stack
+        main_layout = VerticalContainer(
+            x=0, y=0,
+            width=64,
+            # fixed_height=None (default) -> Fills screen
+            spacing=1,
+            children=[
+                header_container,
+                self.cpu_label,
+                self.ram_label,
+                self.net_label,
+                main_spacer,      # <--- The magic spacer pushing footer down
+                footer_container
+            ]
+        )
+
+        # --- 3. ADD TO DASHBOARD ---
+        self.add_widget(main_layout)
+
+    def update(self, dt: float):
+        # Now it's super easy to update specific widgets!
+        # self.cpu_label.text = f"CPU: {get_cpu_percent()}%"
+        super().update(dt)

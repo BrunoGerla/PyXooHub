@@ -16,8 +16,8 @@ class TextWidget(Widget):
     """
     def __init__(
             self, 
-            x: int, 
-            y: int, 
+            x: int = 0, 
+            y: int = 0, 
             text: str = "",
             font: Font | None = None,
             color: ColorValue = Colors.WHITE, 

@@ -3,13 +3,12 @@ import config
 from engine.pixoo_driver import PixooDriver
 from utils.logger import get_logger, configure_logging
 
-from default_dashboards import build_cyberpunk_dashboard
+from default_dashboards import build_cyberpunk_dashboard, LayoutTestDashboard
 
 try:
     from dashboards import build_default_dashboard
     current_dashboard = build_default_dashboard()
 except ImportError:
-    from default_dashboards import build_cyberpunk_dashboard
     current_dashboard = build_cyberpunk_dashboard()
 
 configure_logging()
