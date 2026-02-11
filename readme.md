@@ -31,7 +31,8 @@ This project will turn the Pixoo into a smart dashboard.
 * [x] **TextWidget**: A simple widget for static labels
 * [x] **MediumFont**: Add a medium sized (7 high?) font.
 * [x] **Colors**: Centralized color class.
-* [ ] **Granular Bar Dimming**: Sub-pixel accuracy for smooth bars.
+* [x] **Granular Bar Dimming**: Sub-pixel accuracy for smooth bars.
+* [ ] **Effects system**: A new addition to widgets that allows  for things like blinking lights based on set conditions
 * [ ] **ImageWidget**: Support for drawing icons
 * [ ] **Container**: A widget that holds other widgets (for centering/grouping)
 
