@@ -123,6 +123,16 @@ class Color:
             return Color(self._clamp_rgb(self.r - other.r), self._clamp_rgb(self.g - other.g), self._clamp_rgb(self.b - other.b))
         return NotImplemented
     
+    def __mul__(self, factor: float) -> Color:
+        """Scales the brightness of the color."""
+        factor  = max(0.0, factor)
+
+        return Color(
+            self._clamp_rgb(int(self.r * factor)),
+            self._clamp_rgb(int(self.g * factor)),
+            self._clamp_rgb(int(self.b * factor))
+        )
+    
     def shift_hue(self, amount: float) -> Color:
         """
         Returns a new Color with the hue shifted by amount (0.0 - 1.0).
