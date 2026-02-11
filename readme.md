@@ -31,11 +31,13 @@ This project will turn the Pixoo into a smart dashboard.
 * [x] **TextWidget**: A simple widget for static labels
 * [x] **MediumFont**: Add a medium sized (7 high?) font.
 * [x] **Colors**: Centralized color class.
+* [ ] **Granular Bar Dimming**: Sub-pixel accuracy for smooth bars.
 * [ ] **ImageWidget**: Support for drawing icons
 * [ ] **Container**: A widget that holds other widgets (for centering/grouping)
 
 ### Phase 3: Data Layer (Inplementing Data and API's)
 
 * [x] **Update Interval**: Modify widgets to have a 'update()' method seperate from 'draw()'
-* [ ] **Dashboard Class**: Splitting the dashboard logic and the app.
+* [x] **Dashboard Class**: Splitting the dashboard logic and the app.
 * [ ] **Optimize**: Add async pushing.
+* [ ] **AppClass**: Create a proper Engine class to wrap the main loop.
