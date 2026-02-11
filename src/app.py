@@ -2,12 +2,13 @@ import time
 import config
 from engine.pixoo_driver import PixooDriver
 from utils.logger import get_logger, configure_logging
+from utils.container_tree import print_layout_tree
 
 from default_dashboards import build_cyberpunk_dashboard, LayoutTestDashboard
 
 try:
-    from dashboards import build_default_dashboard
-    current_dashboard = build_default_dashboard()
+    from dashboards import build_default_dashboard, MinimalWhiteDashboard
+    current_dashboard = MinimalWhiteDashboard()
 except ImportError:
     current_dashboard = build_cyberpunk_dashboard()
 

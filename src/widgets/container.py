@@ -10,10 +10,13 @@ VerticalAlignment = Literal["top", "center", "bottom"]
 
 
 class Container(Widget):
-    #TODO: WRITE DOCSTRING
-    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: ColorValue | None = None):
+    """
+    Base class for layout containers.
+    """
+    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: ColorValue | None = None, autosize: bool = True):
         super().__init__(x, y, color)
         self.children = children or []
+        self.autosize = autosize
 
     def add_widget(self, widget: Widget):
         self.children.append(widget)
@@ -54,8 +57,9 @@ class VerticalContainer(Container):
             spacing: int = 1,
             children: list[Widget] | None = None,
             align: Alignment = "left",
-            color: ColorValue | None = None):
-        super().__init__(x, y, children, color)
+            color: ColorValue | None = None,
+            autosize: bool = True):
+        super().__init__(x, y, children, color, autosize)
         self.width = width
         self.padding = padding
         self.spacing = spacing
@@ -67,8 +71,12 @@ class VerticalContainer(Container):
 
     @property
     def height(self) -> int:
-        if self._fixed_height and self._fixed_height > 0:
+        if self._fixed_height is not None:
             return self._fixed_height
+        
+        if self.autosize:
+            return self._get_content_height()
+        
         return max(0, 64 - self.y)
     
     @height.setter
@@ -134,8 +142,9 @@ class HorizontalContainer(Container):
             spacing: int = 1,
             children: list[Widget] | None = None,
             align: VerticalAlignment = "top",
-            color: ColorValue | None = None):
-        super().__init__(x, y, children, color)
+            color: ColorValue | None = None,
+            autosize: bool = True):
+        super().__init__(x, y, children, color, autosize)
         self.height = height
         self.padding = padding
         self.spacing = spacing
@@ -147,8 +156,12 @@ class HorizontalContainer(Container):
 
     @property
     def width(self) -> int:
-        if self._fixed_width and self._fixed_width > 0:
+        if self._fixed_width is not None:
             return self._fixed_width
+        
+        if self.autosize:
+            return self._get_content_width()
+        
         return max(0, 64 - self.x)
     
     @width.setter
