@@ -3,6 +3,7 @@ from typing import Callable, Any
 
 from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
+from engine.color import Color, Colors, ColorValue
 
 from utils.logger import get_logger
 
@@ -19,25 +20,25 @@ class BarWidget(Widget):
                  width: int, 
                  height: int, 
                  percentage: float = 0.0,
-                 color: tuple[int, int, int] = (0, 255, 0),
+                 color: ColorValue = Colors.WHITE,
                  outline: bool = True,
-                 outline_color: tuple[int, int, int] = (255, 255, 255),
-                 color_map: dict[float, tuple[int, int, int]] | None = None,
+                 outline_color: ColorValue = Colors.WHITE,
+                 color_map: dict[float, ColorValue] | None = None,
                  data_source: Callable[[], Any] | None = None,
                  update_interval: float = 1.0):
         """
         Args:
-            color_map: A dictionary of {upper_limit: color_tuple}.
+            color_map: A dictionary of {upper_limit: ColorValue}.
         """
-        super().__init__(x, y)
+        super().__init__(x, y, color)
         self.width = width
         self.height = height
         self.percentage = self._clamp_percentage(percentage)
 
-        self.default_color = color
-        self.current_color = color
+        self.default_color = self.parse_color(color)
+        self.current_color: Color = self.default_color
         self.outline = outline
-        self.outline_color = outline_color
+        self.outline_color = self.parse_color(outline_color)
         self.color_map = dict(sorted(color_map.items())) if color_map else None
 
         self.data_source = data_source
@@ -67,7 +68,7 @@ class BarWidget(Widget):
                 self.set_percentage(value)
             else:
                 self.percentage = 1
-                self.current_color = (255, 0, 0)
+                self.current_color = Colors.RED
 
             self.timer -= self.update_interval
 
@@ -89,7 +90,7 @@ class BarWidget(Widget):
         
         for threshold, color in self.color_map.items():
             if self.percentage <= threshold:
-                self.current_color = color
+                self.current_color = self.parse_color(color)
                 return
             
         self.current_color = self.default_color

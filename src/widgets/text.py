@@ -3,6 +3,7 @@ from typing import Callable, Any
 from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
 from engine.font import Font
+from engine.color import Color, Colors, ColorValue
 
 from utils.logger import get_logger
 
@@ -18,17 +19,16 @@ class TextWidget(Widget):
             x: int, 
             y: int, 
             text: str = "",
-            font: Font | None = None, 
-            color: tuple[int, int, int] = (255, 255, 255), 
+            font: Font | None = None,
+            color: ColorValue = Colors.WHITE, 
             character_spacing: int = 1, 
             space_size: int = 4,
             data_source: Callable[[], Any] | None = None,
             update_interval: float = 1.0,
             **kwargs):
-        super().__init__(x, y)
+        super().__init__(x, y, color)
 
         self.text = text
-        self.color = color
         self.char_spacing = character_spacing
         self.space_size = space_size
         

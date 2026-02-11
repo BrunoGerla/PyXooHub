@@ -5,8 +5,10 @@ import base64
 
 import config
 from engine.font import Font
+from engine.color import Color
 from utils.logger import get_logger, configure_logging
 
+DriverColor = Color | tuple[int, int, int]
 
 configure_logging()
 logger = get_logger("PixooDriver")
@@ -57,7 +59,7 @@ class PixooDriver:
         """Fills the buffer with black (0, 0, 0)"""
         self.buffer = [0] * (self.width * self.height * 3)
 
-    def set_pixel(self, x: int, y: int, rgb: tuple[int, int, int]):
+    def set_pixel(self, x: int, y: int, rgb: DriverColor):
         """
         Safely paints one pixel in the buffer.
         """
@@ -70,7 +72,7 @@ class PixooDriver:
         self.buffer[index : index+3] = (r, g, b)
         return
     
-    def draw_text(self, text: str, x: int, y: int, font: Font, color: tuple[int, int, int], character_spacing: int = 1, space_size: int = 4):
+    def draw_text(self, text: str, x: int, y: int, font: Font, color: DriverColor, character_spacing: int = 1, space_size: int = 4):
         """
         Draws a string of text starting at (x, y).
 
@@ -101,7 +103,7 @@ class PixooDriver:
 
             cursor_x += glyph["width"] + character_spacing
 
-    def fill(self, rgb: tuple[int, int, int]):
+    def fill(self, rgb: DriverColor):
         """Fills the screen with one color"""
         r, g, b = self._unpack_rgb(rgb)
         self.buffer = [r, g, b] * (self.width * self.height)
@@ -167,7 +169,7 @@ class PixooDriver:
             logger.debug(f"Handshake connection error: {e}")
             return False
         
-    def _unpack_rgb(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    def _unpack_rgb(self, rgb: DriverColor) -> tuple[int, int, int]:
         r = self._clamp_value(rgb[0])
         g = self._clamp_value(rgb[1])
         b = self._clamp_value(rgb[2])
