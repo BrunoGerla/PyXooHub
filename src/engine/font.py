@@ -16,7 +16,12 @@ class GlyphData(TypedDict):
 class Font:
     def __init__(self, folder_path: str):
         self._glyphs = {}
+        self._max_height = 0
         self._load_fonts(folder_path)
+
+    @property
+    def height(self) -> int:
+        return self._max_height
 
     def _load_fonts(self, folder: str):
         if not os.path.exists(folder):
@@ -37,7 +42,11 @@ class Font:
             path = os.path.join(folder, filename)
 
             with Image.open(path).convert("RGBA") as img:
-                self._glyphs[char] = self._extract_glyph_data(img)
+                glyph_data = self._extract_glyph_data(img)
+                self._glyphs[char] = glyph_data
+
+                if glyph_data["height"] > self._max_height:
+                    self._max_height = glyph_data["height"]
 
     def _extract_glyph_data(self, img: Image.Image) -> GlyphData:
         """

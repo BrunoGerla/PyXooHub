@@ -2,7 +2,7 @@ from typing import Callable, Any
 
 from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
-from engine.font import Font
+from engine.font import Font, GlyphData
 from engine.color import Color, Colors, ColorValue
 
 from utils.logger import get_logger
@@ -43,6 +43,40 @@ class TextWidget(Widget):
         self.timer = 0.0
 
         self._fetch_data()
+
+    @property
+    def width(self) -> int:
+        if not self.font or not self.text:
+            return 0
+        
+        total_w = 0
+        for char in self.text:
+            if char == " ":
+                total_w += self.space_size
+                continue
+        
+            glyph = self.font.get_glyph(char)
+            if glyph is None:
+                continue
+
+            total_w += glyph["width"] + self.char_spacing
+
+        if self.text and self.text[-1] != " ":
+            total_w = max(0, total_w - self.char_spacing)
+        
+        return total_w
+    
+    @width.setter
+    def width(self, value):
+        logger.warning("Attempted to manually set width of TextWidget. This is ignored because width is calculated dynamically.")
+
+    @property
+    def height(self) -> int:
+        return 0 if not self.font or not self.text else self.font.height
+
+    @height.setter
+    def height(self, value):
+        logger.warning("Attempted to manually set height of TextWidget. This is ignored because height is calculated dynamically.")
 
     def update(self, dt: float):
         if self.data_source is None:
