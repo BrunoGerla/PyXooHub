@@ -36,10 +36,10 @@ class BarWidget(Widget):
         self.height = height
         self.percentage = self._clamp_percentage(percentage)
 
-        self.default_color = self.parse_color(color)
+        self.default_color = Color.parse(color)
         self.current_color: Color = self.default_color
         self.outline = outline
-        self.outline_color = self.parse_color(outline_color)
+        self.outline_color = Color.parse(outline_color)
         self.color_map = dict(sorted(color_map.items())) if color_map else None
 
         self.steps = steps
@@ -93,7 +93,7 @@ class BarWidget(Widget):
         
         for threshold, color in self.color_map.items():
             if self.percentage <= threshold:
-                self.current_color = self.parse_color(color)
+                self.current_color = Color.parse(color)
                 return
             
         self.current_color = self.default_color

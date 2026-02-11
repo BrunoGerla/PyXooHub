@@ -10,36 +10,41 @@ class Widget(ABC):
     Abstract Base Class for all widgets.
     Enforces that every widget must have an update and draw method.
     """
-    def __init__(self, x: int, y: int, color: ColorValue = Colors.WHITE):
+    def __init__(self, x: int = 0, y: int = 0, color: ColorValue = Colors.WHITE):
         self.x = x
         self.y = y
-        
-        self.color = self.parse_color(color)
 
-    # TODO: Refactor to use Color.parse
-    def parse_color(self, value, default = Colors.WHITE) -> Color:
-        if isinstance(value, Color):
-            return value
-        if isinstance(value, (tuple, list)) and len(value) == 3:
-            try:
-                return Color(*value)
-            except:
-                logger.warning(f"Invalid Color Input: {value}. Using default")
-                return default
-        if isinstance(value, str):
-            try:
-                return Color.from_hex(value)
-            except ValueError:
-                logger.warning(f"Invalid hex color '{value}'. Using default.")
-                return default
-        else:
-            logger.warning(f"Invalid Color Input Type: {type(value)}. Using default")
-            return default
+        self._width = 0
+        self._height = 0
+        
+        self.color = Color.parse(color)
+        self.current_color = self.color
+
+    @property
+    def width(self) -> int:
+        return self._width
+    
+    @property
+    def height(self) -> int:
+        return self._height
+    
+    @width.setter
+    def width(self, value: int):
+        self._width = value
+
+    @height.setter
+    def height(self, value: int):
+        self._height = value
+
+    @property
+    def size(self) -> tuple[int, int]:
+        """Returns (width, height). Useful for layout math."""
+        return self.width, self.height
 
     @abstractmethod
     def update(self, dt: float):
         """
-        Update the widget's state.
+        Update the widget's state and effects.
         dt: Delta Time in seconds (time since last frame)
         """
 
@@ -48,4 +53,3 @@ class Widget(ABC):
         """
         Draws the widget content onto the driver's buffer.
         """
-        pass
