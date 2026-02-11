@@ -11,7 +11,7 @@ VerticalAlignment = Literal["top", "center", "bottom"]
 
 class Container(Widget):
     #TODO: WRITE DOCSTRING
-    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: Color = Colors.BLACK):
+    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: ColorValue | None = None):
         super().__init__(x, y, color)
         self.children = children or []
 
@@ -33,6 +33,11 @@ class Container(Widget):
             child.update(dt)
 
     def draw(self, driver: PixooDriver):
+        if self.color:
+            for i in range(self.width):
+                for j in range(self.height):
+                    driver.set_pixel(self.x + i, self.y + j, self.color)
+
         for child in self.children:
             child.draw(driver)
 
@@ -49,7 +54,7 @@ class VerticalContainer(Container):
             spacing: int = 1,
             children: list[Widget] | None = None,
             align: Alignment = "left",
-            color: Color = Colors.BLACK):
+            color: ColorValue | None = None):
         super().__init__(x, y, children, color)
         self.width = width
         self.padding = padding
@@ -129,7 +134,7 @@ class HorizontalContainer(Container):
             spacing: int = 1,
             children: list[Widget] | None = None,
             align: VerticalAlignment = "top",
-            color: Color = Colors.BLACK):
+            color: ColorValue | None = None):
         super().__init__(x, y, children, color)
         self.height = height
         self.padding = padding
