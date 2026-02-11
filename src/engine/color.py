@@ -127,10 +127,16 @@ class Color:
         """Scales the brightness of the color."""
         factor  = max(0.0, factor)
 
+        # we have to correct the brightness as actually multiplying 0.5 doesnt look 'half as bright' at all.
+        if factor < 1.0:
+            corrected_factor = factor ** (1/2.2)
+        else:
+            corrected_factor = factor
+
         return Color(
-            self._clamp_rgb(int(self.r * factor)),
-            self._clamp_rgb(int(self.g * factor)),
-            self._clamp_rgb(int(self.b * factor))
+            self._clamp_rgb(int(self.r * corrected_factor)),
+            self._clamp_rgb(int(self.g * corrected_factor)),
+            self._clamp_rgb(int(self.b * corrected_factor))
         )
     
     def shift_hue(self, amount: float) -> Color:
