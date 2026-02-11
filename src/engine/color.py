@@ -1,5 +1,8 @@
 from __future__ import annotations
 import colorsys
+from utils.logger import get_logger
+
+logger = get_logger("ColorEngine")
 
 class Color:
     """
@@ -53,6 +56,24 @@ class Color:
     
     def __repr__(self) -> str:
         return f"Color({self.r}, {self.g}, {self.b})"
+    
+    @staticmethod
+    def parse(value: "ColorValue", default: Color | None= None) -> Color:
+        if isinstance(value, Color):
+            return value
+        if isinstance(value, tuple) and len(value) == 3:
+            if isinstance(value[0], int) and isinstance(value[1], int) and isinstance(value[2], int):
+                return Color(*value)
+            if isinstance(value[0], float) and isinstance(value[1], float) and isinstance(value[2], int):
+                return Color.from_hsv(*value)
+        if isinstance(value, str) and len(value.strip().lstrip("#")) == 6:
+            return Color.from_hex(value)
+        if isinstance(default, Color):
+            logger.warning(f"Warning: Could not parse value ({value}) to valid Color Object. Returning Default {default}")
+            return default
+        else:
+            logger.warning(f"Warning: Could not parse value ({value}) to valid Color Object.")
+            raise ValueError(f"Invalid Color Format: {value}")
     
     @classmethod
     def from_hex(cls, hex_str: str) -> Color:

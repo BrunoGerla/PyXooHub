@@ -16,6 +16,7 @@ class Widget(ABC):
         
         self.color = self.parse_color(color)
 
+    # TODO: Refactor to use Color.parse
     def parse_color(self, value, default = Colors.WHITE) -> Color:
         if isinstance(value, Color):
             return value
