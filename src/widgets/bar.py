@@ -24,6 +24,7 @@ class BarWidget(Widget):
                  outline: bool = True,
                  outline_color: ColorValue = Colors.WHITE,
                  color_map: dict[float, ColorValue] | None = None,
+                 steps: int = 1, 
                  data_source: Callable[[], Any] | None = None,
                  update_interval: float = 1.0):
         """
@@ -40,6 +41,8 @@ class BarWidget(Widget):
         self.outline = outline
         self.outline_color = self.parse_color(outline_color)
         self.color_map = dict(sorted(color_map.items())) if color_map else None
+
+        self.steps = steps
 
         self.data_source = data_source
         self.update_interval = update_interval
@@ -124,27 +127,65 @@ class BarWidget(Widget):
             fill_x, fill_y = start_x, start_y
             fill_w, fill_h = draw_w, draw_h
 
-        if fill_w <= 0 or fill_h <= 0:
-            return
+        if fill_w <= 0 or fill_h <= 0: return
         
         if is_vertical:
-            filled_height = math.ceil(fill_h * self.percentage)
+            total_pixels = fill_h * self.percentage
+            full_pixels, remainder = self._calculate_steps(total_pixels)
 
-            # We iterate from the bottom pixel upwards
-            for py in range(filled_height):
+            # draw the full pixels first
+            for py in range(full_pixels):
                 # Calculate Y: Bottom of fill area - current offset
                 pixel_y = (fill_y + fill_h - 1) - py
                 for px in range(fill_w):
                     driver.set_pixel(fill_x + px, pixel_y, self.current_color)
-
-        else:
-            # Horizontal: Fill from left to right
-            filled_width = math.ceil(fill_w * self.percentage)
             
-            for px in range(filled_width):
+            # draw the dimmed pixels
+            if remainder > 0.05:
+                dimmed_color = self.current_color * remainder
+                pixel_y = (fill_y + fill_h - 1) - full_pixels
+                if pixel_y >= fill_y:
+                    for px in range(fill_w):
+                        driver.set_pixel(fill_x + px, pixel_y, dimmed_color)
+
+        if not is_vertical:
+            # Horizontal: Fill from left to right
+            total_pixels = fill_w * self.percentage
+            full_pixels, remainder = self._calculate_steps(total_pixels)
+            
+            # draw full pixels first
+            for px in range(full_pixels):
                 pixel_x = fill_x + px
                 for py in range(fill_h):
                     driver.set_pixel(pixel_x, fill_y + py, self.current_color)
+
+            # draw the dimmed pixels
+            if remainder > 0.05:
+                dimmed_color = self.current_color * remainder
+                pixel_x = fill_x + full_pixels
+                if pixel_x < fill_x + fill_w:
+                    for py in range(fill_h):
+                        driver.set_pixel(pixel_x, fill_y + py, dimmed_color)
+
+    def _calculate_steps(self, total_pixels: float) -> tuple[int, float]:
+        """
+        Returns (full_pixels, remainder_brightness) based on self.steps.
+        """
+        EPSILON = 1e-5
+        if self.steps <= EPSILON:
+            full = int(total_pixels)
+            rem = total_pixels - full
+            return full, rem
+        
+        full = int(total_pixels)
+        raw_remainder = total_pixels - full
+
+        if raw_remainder <= EPSILON:
+            return full, 0.0
+        
+        snapped_remainder = math.ceil((raw_remainder - EPSILON)* self.steps) / self.steps
+
+        return full, snapped_remainder
 
     def _clamp_percentage(self, value: float) -> float:
         return min(1, max(0, value))
