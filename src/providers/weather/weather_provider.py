@@ -9,10 +9,10 @@ logger = get_logger("WeatherProvider")
 
 @dataclass
 class WeatherData:
-    temperature: float
-    weather_code: int
-    is_day: bool
-    weather_description: str
+    temperature: float = 0.0
+    weather_code: int = 0
+    is_day: bool = True
+    weather_description: str = "UNKNOWN"
 
 class WeatherProvider:
     def __init__(self, location_provider: LocationProvider, update_interval_min: int = 15) -> None:
@@ -20,25 +20,24 @@ class WeatherProvider:
         self.update_interval = update_interval_min * 60
         self.last_fetch_time = 0
 
-        self.data: WeatherData | None = None
-
+        self.data: WeatherData = WeatherData()
         self._refresh()
 
     def temperature(self) -> float:
         self._check_refresh()
-        return self.data.temperature if self.data else 0.0
+        return self.data.temperature
     
     def weather_code(self) -> int:
         self._check_refresh()
-        return self.data.weather_code if self.data else 0
+        return self.data.weather_code
     
     def is_day(self) -> bool:
         self._check_refresh()
-        return self.data.is_day if self.data else True
+        return self.data.is_day
     
     def weather_description(self) -> str:
         self._check_refresh()
-        return self.data.weather_description if self.data else "Clear sky"
+        return self.data.weather_description
 
     def _check_refresh(self):
         """Prevents API spam. Only fetches if data is stale."""
@@ -82,7 +81,7 @@ class WeatherProvider:
 
 if __name__ == "__main__":
     configure_logging()
-    
+
     location = LocationProvider()
     weather = WeatherProvider(location)
 
