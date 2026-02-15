@@ -108,6 +108,9 @@ class LayoutTestDashboard(Dashboard):
         self.add_widget(main_layout)
 
     def update(self, dt: float):
-        # Now it's super easy to update specific widgets!
-        # self.cpu_label.text = f"CPU: {get_cpu_percent()}%"
         super().update(dt)
+
+DEFAULT_DASHBOARDS = {
+    "Layout Test": LayoutTestDashboard,
+    "CyberPunk": build_cyberpunk_dashboard
+}
