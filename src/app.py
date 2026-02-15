@@ -6,7 +6,7 @@ from typing import Callable, Type
 
 from engine.pixoo_driver import PixooDriver
 from utils.logger import get_logger, configure_logging
-from utils.container_tree import print_layout_tree
+from utils.container_tree import log_layout_tree
 from engine.dashboard import Dashboard
 
 DashboardBuilder = Callable[[], Dashboard] | Type[Dashboard]
@@ -61,7 +61,7 @@ def main():
     # --- CONFIG ---
     FRAME_INTERVAL = 0.5
 
-    # logger.info(f"Engine Loop Started with {len(current_dashboard.widgets)} widgets.")
+    logger.info(f"Engine Loop Started with {len(current_dashboard.widgets)} widgets.")
     last_time = time.time()
     
     try:
