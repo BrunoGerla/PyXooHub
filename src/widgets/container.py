@@ -18,6 +18,13 @@ class Container(Widget):
         self.children = children or []
         self.autosize = autosize
 
+    @property
+    def widget_count(self) -> int:
+        """
+        Recursive count: 1 (Self) + Sum(Children)
+        """
+        return 1 + sum(child.widget_count for child in self.children)
+
     def add_widget(self, widget: Widget):
         self.children.append(widget)
         self.reposition()

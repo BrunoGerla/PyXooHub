@@ -10,6 +10,13 @@ class Dashboard:
     def __init__(self, widgets: list[Widget] = [], background_color: ColorValue = Colors.BLACK):
         self.widgets: list[Widget] = widgets
         self.background_color: Color = Color.parse(background_color)
+
+    @property
+    def widget_count(self) -> int:
+        """
+        Returns the total number of widgets in the entire tree.
+        """
+        return sum(w.widget_count for w in self.widgets)
         
     def add_widget(self, widget: Widget):
         """Adds a widget to the dashboard."""

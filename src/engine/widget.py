@@ -37,6 +37,14 @@ class Widget(ABC):
         self._height = value
 
     @property
+    def widget_count(self) -> int:
+        """
+        Returns the number of widgets in this branch. 
+        Base widgets count as 1.
+        """
+        return 1
+
+    @property
     def size(self) -> tuple[int, int]:
         """Returns (width, height). Useful for layout math."""
         return self.width, self.height
