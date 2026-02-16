@@ -1,9 +1,7 @@
 @echo off
 cd /d "%~dp0"
 
-:: Activate the virtual environment
-call .venv/Scripts/activate.bat
-
-python src/app.py
+:: start app
+uv run src/app.py
 
 pause
