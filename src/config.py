@@ -31,7 +31,7 @@ PIXOO_IP = _get_env("PIXOO_IP")
 PIXOO_PORT = int(_get_env("PIXOO_PORT", "80")) # default to 80
 
 PIXOO_RETRIES: int = 3 # number of retries on connection
-PIXOO_TIMEOUT: int = 10 # number of seconds before timeout
+PIXOO_TIMEOUT: int = 5 # number of seconds before timeout
 
 # Log settings
 LOG_FILE_NAME = "pyxoo.log"

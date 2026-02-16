@@ -41,13 +41,13 @@ class PixooDriver:
         """
         logger.info(f"Initiating handshake with Pixoo at {self.ip}:{self.port}")
 
-        for attempt in range(1, config.PIXOO_RETRIES + 1):
+        for attempt in range(1, self.retries + 1):
             if self._perform_handshake():
                 self.is_connected = True
                 logger.info(f"Succesfully connected to the Pixoo!")
                 return True
             
-            logger.warning(f"Connection attempt {attempt}/{config.PIXOO_RETRIES} failed. Retrying in 1s...")
+            logger.warning(f"Connection attempt {attempt}/{self.retries} failed. Retrying in {self.timeout}s...")
             time.sleep(self.timeout)
 
         logger.critical(f"Failed to connect to Pixoo at {self.ip}. Is the IP correct?")
@@ -112,7 +112,8 @@ class PixooDriver:
         """Sends the buffer to the Pixoo"""
         if not self.is_connected:
             logger.warning("Cannot push frame: Device disconnected.")
-            return
+            if not self.connect():
+                return
 
         try:
             self.session.post(self.base_url, json={"Command": "Draw/ResetHttpGifId"}, timeout=self.timeout)
@@ -146,7 +147,7 @@ class PixooDriver:
         payload = {"Command": "Device/GetTime"}
         
         try:
-            response = requests.post(
+            response = self.session.post(
                 self.base_url, 
                 json=payload, 
                 timeout=self.timeout
