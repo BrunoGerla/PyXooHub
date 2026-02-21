@@ -31,14 +31,17 @@ class RazerSynapseProvider(MouseProvider):
         self._discover_latest_log() 
 
     def get_battery_percentage(self) -> float:
+        """Returns the cached battery percentage, triggering a background update if needed."""
         self._check_timers()
         return self._data.battery_percentage
     
     def is_charging(self) -> bool:
+        """Returns the cached charging status, triggering a background update if needed."""
         self._check_timers()
         return self._data.is_charging
 
     def _check_timers(self) -> None:
+        """Triggers fast file reads or slow directory scans based on elapsed time."""
         current_time = time.time()
 
         if current_time - self._last_discovery_time > self._discovery_interval:
@@ -48,6 +51,7 @@ class RazerSynapseProvider(MouseProvider):
             self._poll_active_log()
 
     def _poll_active_log(self) -> None:
+        """Fast refresh: parses the cached log file only if its modified time has changed, with stale-cache fallback."""
         self._last_fetch_time = time.time()
 
         if not self._cached_file or not self._cached_file.exists():
@@ -80,6 +84,7 @@ class RazerSynapseProvider(MouseProvider):
                 pass 
 
     def _has_file_changed(self) -> bool:
+        """Returns True if the cached log file's modified time is newer than our last read."""
         if not self._cached_file:
             return False
         
@@ -91,6 +96,7 @@ class RazerSynapseProvider(MouseProvider):
             return False
 
     def _discover_latest_log(self) -> None:
+        """Slow refresh: Scans the Synapse directory to find the newest log file (handles log rotation)."""
         self._last_discovery_time = time.time() 
         
         logger.debug("Discovering: Scanning directory for newest log.")
@@ -115,6 +121,7 @@ class RazerSynapseProvider(MouseProvider):
             logger.debug("Directory scan complete. Active log is still the newest file.")
 
     def _parse_file(self, filename: Path) -> None:
+        """Reads the log backwards to extract and cache the latest device JSON payload."""
         try:
             with filename.open("r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
