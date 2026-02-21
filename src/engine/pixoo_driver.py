@@ -10,9 +10,7 @@ from utils.logger import get_logger, configure_logging
 
 DriverColor = Color | tuple[int, int, int]
 
-configure_logging()
 logger = get_logger("PixooDriver")
-
 
 class PixooDriver:
     def __init__(self, ip_address: str = config.PIXOO_IP, port: int = config.PIXOO_PORT, retries: int = config.PIXOO_RETRIES, timeout: int = config.PIXOO_TIMEOUT):
