@@ -15,48 +15,60 @@ class WeatherData:
     weather_description: str = "UNKNOWN"
 
 class WeatherProvider:
+    """Provides local weather data by polling the Open-Meteo API."""
+    
     def __init__(self, location_provider: LocationProvider, update_interval_min: int = 15) -> None:
-        self.location = location_provider
-        self.update_interval = update_interval_min * 60
-        self.last_fetch_time = 0
-
+        self._location: LocationProvider = location_provider
+        
+        self._update_interval: int = update_interval_min * 60
+        
+        self._last_fetch_time: float = 0.0
         self._data: WeatherData = WeatherData()
+        
         self._refresh()
 
+    def update(self, dt: float) -> None:
+        """Called every frame by the dashboard to handle background polling."""
+        self._check_timer()
+
+    @property
     def temperature(self) -> float:
-        self._check_refresh()
         return self._data.temperature
     
+    @property
     def weather_code(self) -> int:
-        self._check_refresh()
         return self._data.weather_code
     
+    @property
     def is_day(self) -> bool:
-        self._check_refresh()
         return self._data.is_day
     
+    @property
     def weather_description(self) -> str:
-        self._check_refresh()
         return self._data.weather_description
 
-    def _check_refresh(self):
+    def _check_timer(self) -> None:
         """Prevents API spam. Only fetches if data is stale."""
-        logger.debug(f"Checking refresh. Time since last fetch: {time.time()-self.last_fetch_time:.2f}. Update interval: {self.update_interval:.0f}")
-        if time.time() - self.last_fetch_time > self.update_interval:
+        current_time = time.time()
+        
+        logger.debug(f"Checking weather timer. Fetch: {current_time-self._last_fetch_time:.1f}s/{self._update_interval}s")
+        
+        if current_time - self._last_fetch_time > self._update_interval:
             self._refresh()
 
-    def _refresh(self):
+    def _refresh(self) -> None:
+        """Performs the actual HTTP request to Open-Meteo."""
         logger.info("Refreshing Weather Information.")
-        loc = self.location
+        loc = self._location
 
         if loc.lat == 0.0 and loc.lon == 0.0:
-            self.location.refresh()
-            if self.location.lat == 0.0:
+            self._location.refresh()
+            if self._location.lat == 0.0:
                 logger.warning("Missing location data. Skipping weather fetch.")
                 return
             
         try:
-            logger.info(f"Fetching weather for {loc.city}...")
+            logger.debug(f"Fetching weather for {loc.city}...")
             url = "https://api.open-meteo.com/v1/forecast"
             params = {
                 "latitude": loc.lat,
@@ -75,9 +87,9 @@ class WeatherProvider:
                     weather_description=get_weather_description(json_data.get("weathercode", "UNKNOWN"))
                 )
                 
-                logger.info(f"Weather Updated: {self._data.temperature}°C")
+                logger.info(f"Weather Updated: {self._data.temperature}°C | {self._data.weather_description}")
 
-            self.last_fetch_time = time.time()
+            self._last_fetch_time = time.time()
         except Exception as e:
             logger.error(f"Weather fetch failed: {e}")
 
@@ -87,4 +99,9 @@ if __name__ == "__main__":
     location = LocationProvider()
     weather = WeatherProvider(location)
 
-    weather.temperature()
+    # Simulate main loop
+    weather.update(0.1)
+
+    # Now these are accessed without parentheses!
+    print(f"Temperature: {weather.temperature}")
+    print(f"Description: {weather.weather_description}")

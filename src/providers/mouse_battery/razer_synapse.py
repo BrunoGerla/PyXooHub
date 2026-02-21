@@ -14,11 +14,19 @@ class MouseData:
     is_charging: bool = False
 
 class RazerSynapseProvider(MouseProvider):
-    def __init__(self, update_interval_seconds: int = 5, discovery_interval_seconds: int = 300) -> None: 
+    """Provides Razer mouse battery and charging data by polling local Synapse log files."""
+    
+    def __init__(self, 
+                 update_interval_seconds: int = 5, 
+                 discovery_interval_seconds: int = 300,
+                 stale_timeout_seconds: int = 900,
+                 forced_discovery_cooldown_seconds: int = 300) -> None: 
         self._log_dir: Path = Path.home() / "AppData" / "Local" / "Razer" / "RazerAppEngine" / "User Data" / "Logs"
         
         self._update_interval: int = update_interval_seconds     
         self._discovery_interval: int = discovery_interval_seconds 
+        self._stale_timeout: int = stale_timeout_seconds
+        self._forced_discovery_cooldown: int = forced_discovery_cooldown_seconds
         
         self._last_fetch_time: float = 0.0
         self._last_discovery_time: float = 0.0
@@ -28,16 +36,21 @@ class RazerSynapseProvider(MouseProvider):
         self._data: MouseData = MouseData()
 
         logger.debug(f"Razer Synapse Log Directory: {self._log_dir}")
-        self._discover_latest_log() 
+        self._discover_latest_log()
+        self._poll_active_log()
 
-    def get_battery_percentage(self) -> float:
-        """Returns the cached battery percentage, triggering a background update if needed."""
+    def update(self, dt: float) -> None:
+        """Called every frame to process file timers. Takes delta time (dt) for compatibility."""
         self._check_timers()
+
+    @property
+    def battery_percentage(self) -> float:
+        """Pure getter. Returns the cached battery percentage."""
         return self._data.battery_percentage
     
+    @property
     def is_charging(self) -> bool:
-        """Returns the cached charging status, triggering a background update if needed."""
-        self._check_timers()
+        """Pure getter. Returns the cached charging status."""
         return self._data.is_charging
 
     def _check_timers(self) -> None:
@@ -57,8 +70,6 @@ class RazerSynapseProvider(MouseProvider):
         if not self._cached_file or not self._cached_file.exists():
             return 
 
-        logger.debug(f"Checking cached log for changes: {self._cached_file.name}")
-
         if self._has_file_changed():
             try:
                 current_mtime = self._cached_file.stat().st_mtime
@@ -77,8 +88,8 @@ class RazerSynapseProvider(MouseProvider):
                 time_since_last_write = time.time() - current_mtime
                 time_since_last_discovery = time.time() - self._last_discovery_time
                 
-                if time_since_last_write > 120 and time_since_last_discovery > 60:
-                    logger.warning("Active log appears stale. Forcing early discovery scan...")
+                if time_since_last_write > self._stale_timeout and time_since_last_discovery > self._forced_discovery_cooldown:
+                    logger.warning(f"Log idle for {time_since_last_write/60:.1f} mins. Forcing early discovery scan...")
                     self._discover_latest_log()
             except OSError:
                 pass 
@@ -118,7 +129,7 @@ class RazerSynapseProvider(MouseProvider):
             self._cached_file = latest_file
             self._last_modified_time = 0.0 
         else:
-            logger.debug("Directory scan complete. Active log is still the newest file.")
+            logger.warning("Forced discovery scan found no new files. The active log is just idle (Wasted resource).")
 
     def _parse_file(self, filename: Path) -> None:
         """Reads the log backwards to extract and cache the latest device JSON payload."""
@@ -141,7 +152,6 @@ class RazerSynapseProvider(MouseProvider):
                                     if level is not None:
                                         new_battery_pct = float(level) / 100.0
                                         
-                                        # Only log if the data actually changed
                                         if new_battery_pct != self._data.battery_percentage or is_charging != self._data.is_charging:
                                             self._data.battery_percentage = new_battery_pct
                                             self._data.is_charging = is_charging
@@ -156,5 +166,10 @@ class RazerSynapseProvider(MouseProvider):
 
 if __name__ == "__main__":
     provider = RazerSynapseProvider()
-    print(f"Battery: {provider.get_battery_percentage() * 100}%")
-    print(f"Charging: {provider.is_charging()}")
+    
+    # Simulate a main loop calling update
+    provider.update(0.1) 
+    
+    # Safely fetch the properties
+    print(f"Battery: {provider.battery_percentage * 100}%")
+    print(f"Charging: {provider.is_charging}")
