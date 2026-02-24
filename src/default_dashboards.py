@@ -8,6 +8,10 @@ from widgets.text import TextWidget
 from widgets.datetime import DateTimeWidget
 from widgets.bar import BarWidget
 from widgets.spacer import Spacer
+from widgets.gap import Gap
+
+from utils.geo import LocationProvider
+from providers.weather.weather_provider import WeatherProvider
 
 def build_cyberpunk_dashboard() -> Dashboard:
     """
@@ -40,77 +44,86 @@ def build_cyberpunk_dashboard() -> Dashboard:
         widgets=widgets
     )
 
-class LayoutTestDashboard(Dashboard):
+class TutorialDashboard(Dashboard):
+    """
+    A minimalistic dashboard showcasing the layout engine.
+    Features a styled header, side-by-side data widgets, and a footer bar.
+    """
+    
+    # --- THEME / PALETTE ---
+    BG_COLOR       = Color(15, 15, 20)  # Dark grey/blue
+    HEADER_BG      = Color(40, 40, 55)  # Distinct, lighter background for the header
+    HEADER_COLOR   = Colors.CYAN        # Cyan looks great against dark blue
+    CLOCK_COLOR    = Colors.WHITE
+    TEMP_COLOR     = Colors.YELLOW
+    FOOTER_TEXT    = Color(100, 100, 100) # Dim grey for footer text
+
     def __init__(self):
-        super().__init__()
+        # Apply background color from palette
+        super().__init__(background_color=self.BG_COLOR)
 
-        # --- 1. CREATE WIDGETS (The "Ingredients") ---
-        # We define them as 'self.' so we can update their text later!
+        # --- 1. INITIALIZE PROVIDERS ---
+        self.location = LocationProvider()
+        self.weather = WeatherProvider(self.location)
+
+        # --- 2. CREATE WIDGETS ---
+        # Header & Main Data
+        self.header_label = TextWidget(text="PYXOOHUB", color=self.HEADER_COLOR, name="HeaderText")
+        self.clock = DateTimeWidget(format="%H:%M", font=resources.medium_01, color=self.CLOCK_COLOR, name="Clock")
+        self.temp_label = TextWidget(data_source=lambda: f"{self.weather.temperature:.1f}°C", color=self.TEMP_COLOR, name="Temp")
         
-        # Top Label
-        self.header_label = TextWidget(text="SYSTEM", color=Colors.WHITE)
-        
-        # The 3 Status Widgets
-        self.cpu_label = TextWidget(text="CPU: 12%", color=Colors.GREEN)
-        self.ram_label = TextWidget(text="RAM: 45%", color=Colors.YELLOW)
-        self.net_label = TextWidget(text="NET: UP", color=Colors.CYAN)
-
-        # Footer items
-        self.footer_left = TextWidget(text="A", color=Colors.RED)
-        self.footer_right = TextWidget(text="B", color=Colors.RED)
-
-        # Spacers (We can make them on the fly or define them here)
-        main_spacer = Spacer()
-        footer_spacer = Spacer()
-
-
-        # --- 2. ASSEMBLE CONTAINERS (The "Recipe") ---
-
-        # The Header Row
-        header_container = HorizontalContainer(
-            height=10,
-            width=64,
-            color=Colors.BLUE,
-            align="center", # Vertically center the text
-            children=[self.header_label]
+        # Footer Widgets (Showcasing the BarWidget!)
+        self.footer_label = TextWidget(text="SYS", color=self.FOOTER_TEXT, name="FooterLabel")
+        self.sys_bar = BarWidget(
+            width=39, 
+            height=5, 
+            percentage=0.65,      # Static for the tutorial, but could be tied to a data_source!
+            color=Colors.GREEN, 
+            outline=True, 
+            outline_color=Color(50, 50, 50),
+            name="SysBar"
         )
 
-        # The Footer Row (Left text, Spacer, Right text)
-        footer_container = HorizontalContainer(
-            height=12,
-            width=64,
-            color=Color(200, 200, 200),
-            align="center",
-            children=[
-                self.footer_left,
-                footer_spacer, # Pushes B to the right
-                self.footer_right
-            ]
+        # --- 3. ASSEMBLE LAYOUT ---
+        
+        # Top Header Bar
+        header_bar = HorizontalContainer(
+            width=64, height=11, color=self.HEADER_BG, align="center",
+            children=[Spacer(), self.header_label, Spacer()], name="HeaderBar"
         )
 
-        # The Main Vertical Stack
+        # Middle Data Row
+        data_row = HorizontalContainer(
+            width=64, align="center",
+            children=[Spacer(), self.clock, Spacer(), self.temp_label, Spacer()], name="DataRow"
+        )
+
+        # Bottom Footer Row
+        footer_row = HorizontalContainer(
+            width=64, height=9, align="center", padding=2, spacing=4, autosize=False,
+            children=[Spacer(), self.footer_label, self.sys_bar, Spacer()], name="FooterRow"
+        )
+
+        # Main Vertical Stack
         main_layout = VerticalContainer(
-            x=0, y=0,
-            width=64,
-            # fixed_height=None (default) -> Fills screen
-            spacing=1,
+            width=64, autosize=False, spacing=0,
             children=[
-                header_container,
-                self.cpu_label,
-                self.ram_label,
-                self.net_label,
-                main_spacer,      # <--- The magic spacer pushing footer down
-                footer_container
-            ]
+                header_bar,
+                Gap(10),           # Hardcoded distance from header to data
+                data_row,
+                Spacer(),          # <--- Pushes the footer_row firmly to the bottom!
+                footer_row
+            ], name="MainLayout"
         )
 
-        # --- 3. ADD TO DASHBOARD ---
+        # --- 4. ADD TO DASHBOARD ---
         self.add_widget(main_layout)
 
     def update(self, dt: float):
         super().update(dt)
+        self.weather.update(dt)
 
 DEFAULT_DASHBOARDS = {
-    "Layout Test": LayoutTestDashboard,
-    "CyberPunk": build_cyberpunk_dashboard
+    "CyberPunk": build_cyberpunk_dashboard,
+    "Tutorial Dashboard": TutorialDashboard
 }

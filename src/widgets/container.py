@@ -13,8 +13,8 @@ class Container(Widget):
     """
     Base class for layout containers.
     """
-    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: ColorValue | None = None, autosize: bool = True):
-        super().__init__(x, y, color)
+    def __init__(self, x: int = 0, y: int = 0, children: list[Widget] | None = None, color: ColorValue | None = None, autosize: bool = True, name: str | None = None):
+        super().__init__(x, y, color, name=name)
         self.children = children or []
         self.autosize = autosize
 
@@ -53,7 +53,6 @@ class Container(Widget):
 
 
 class VerticalContainer(Container):
-    #TODO: WRITE DOCSTRING
     def __init__(
             self, 
             x: int = 0, 
@@ -65,8 +64,9 @@ class VerticalContainer(Container):
             children: list[Widget] | None = None,
             align: Alignment = "left",
             color: ColorValue | None = None,
-            autosize: bool = True):
-        super().__init__(x, y, children, color, autosize)
+            autosize: bool = True,
+            name: str | None = None):
+        super().__init__(x, y, children, color, autosize, name)
         self.padding = padding
         self.spacing = spacing
         self._align: Alignment = align
@@ -97,7 +97,9 @@ class VerticalContainer(Container):
             return self._fixed_width
         
         if self.autosize:
-            content_width = (max(c.width for c in self.children if not getattr(c, 'is_spacer', False)))
+            if not self.children:
+                return 0
+            content_width = max((c.width for c in self.children if not getattr(c, 'is_spacer', False)), default=0)
             return content_width + (self.padding * 2)
     
         return max(0, 64 - self.x)
@@ -114,7 +116,7 @@ class VerticalContainer(Container):
         
         current_y = self.y + self.padding
 
-        for child in self.children:
+        for i, child in enumerate(self.children):
             if self._align == "center":
                 child.x = self.x + (self.width - child.width) // 2
             elif self._align == "right":
@@ -127,17 +129,31 @@ class VerticalContainer(Container):
             if isinstance(child, Container):
                 child.reposition()
                 
-            current_y += child.height + self.spacing
+            current_y += child.height
+            
+            # Smart spacing: only add gap if between two solid widgets
+            is_this_spacer = getattr(child, 'is_spacer', False)
+            if i + 1 < len(self.children):
+                is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
+                if not is_this_spacer and not is_next_spacer:
+                    current_y += self.spacing
 
     def _get_content_height(self) -> int:
         if not self.children:
             return 0
         
-        content_height = sum(
-            c.height for c in self.children if not getattr(c, 'is_spacer', False)
-        )
+        content_height = sum(c.height for c in self.children if not getattr(c, 'is_spacer', False))
 
-        content_height += self.spacing * (len(self.children) -1)
+        # Count how many smart gaps we actually have
+        spacing_count = 0
+        for i, child in enumerate(self.children):
+            if i + 1 < len(self.children):
+                is_this_spacer = getattr(child, 'is_spacer', False)
+                is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
+                if not is_this_spacer and not is_next_spacer:
+                    spacing_count += 1
+                    
+        content_height += self.spacing * spacing_count
         content_height += self.padding * 2
         return content_height
     
@@ -151,9 +167,7 @@ class VerticalContainer(Container):
                 spacer.height = space_per_spacer
 
 
-
 class HorizontalContainer(Container):
-    #TODO: WRITE DOCSTRING
     def __init__(
             self, 
             x: int = 0, 
@@ -165,8 +179,9 @@ class HorizontalContainer(Container):
             children: list[Widget] | None = None,
             align: VerticalAlignment = "top",
             color: ColorValue | None = None,
-            autosize: bool = True):
-        super().__init__(x, y, children, color, autosize)
+            autosize: bool = True,
+            name: str | None = None):
+        super().__init__(x, y, children, color, autosize, name)
         self.padding = padding
         self.spacing = spacing
         self._align: VerticalAlignment = align
@@ -206,7 +221,7 @@ class HorizontalContainer(Container):
         
     @height.setter
     def height(self, value):
-        self._fixed_width = value
+        self._fixed_height = value   # <--- FIXED TYPO HERE!
         self.reposition()
             
     def reposition(self):
@@ -216,7 +231,7 @@ class HorizontalContainer(Container):
         
         current_x = self.x + self.padding
 
-        for child in self.children:
+        for i, child in enumerate(self.children):
             # Vertical Alignment Logic (Cross-Axis)
             if self._align == "center":
                 child.y = self.y + (self.height - child.height) // 2
@@ -231,17 +246,31 @@ class HorizontalContainer(Container):
             if isinstance(child, Container):
                 child.reposition()
                 
-            current_x += child.width + self.spacing
+            current_x += child.width
+            
+            # Smart spacing: only add gap if between two solid widgets
+            is_this_spacer = getattr(child, 'is_spacer', False)
+            if i + 1 < len(self.children):
+                is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
+                if not is_this_spacer and not is_next_spacer:
+                    current_x += self.spacing
 
     def _get_content_width(self) -> int:
         if not self.children:
             return 0
         
-        content_width = sum(
-            c.width for c in self.children if not getattr(c, 'is_spacer', False)
-        )
+        content_width = sum(c.width for c in self.children if not getattr(c, 'is_spacer', False))
 
-        content_width += self.spacing * (len(self.children) - 1)
+        # Count how many smart gaps we actually have
+        spacing_count = 0
+        for i, child in enumerate(self.children):
+            if i + 1 < len(self.children):
+                is_this_spacer = getattr(child, 'is_spacer', False)
+                is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
+                if not is_this_spacer and not is_next_spacer:
+                    spacing_count += 1
+                    
+        content_width += self.spacing * spacing_count
         content_width += self.padding * 2
         return content_width
     

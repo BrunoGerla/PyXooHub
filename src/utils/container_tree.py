@@ -1,4 +1,5 @@
 from engine.dashboard import Dashboard
+from engine.widget import Widget
 from widgets.container import Container
 from widgets.text import TextWidget
 from utils.logger import get_logger
@@ -20,17 +21,19 @@ def print_layout_tree(node, indent=0):
             print_layout_tree(child, indent + 1)
         return
 
-    name = node.__class__.__name__
-    props = f"(x={node.x}, y={node.y}, w={node.width}, h={node.height})"
-    
-    extra = ""
-    if getattr(node, "is_spacer", False):
-        extra = " [SPACER]"
-    elif isinstance(node, TextWidget):
-        extra = f" '{node.text}'"
+    if isinstance(node, Widget):
+        class_name = node.__class__.__name__
+        display_name = node.name if getattr(node, "name", None) else class_name
+        props = f"(x={node.x}, y={node.y}, w={node.width}, h={node.height})"
         
-    logger.info(f"{prefix}{name} {props}{extra}")
+        extra = ""
+        if getattr(node, "is_spacer", False):
+            extra = " [SPACER]"
+        elif isinstance(node, TextWidget):
+            extra = f" '{node.text}'"
+            
+        logger.info(f"{prefix}{display_name} {props}{extra}")
 
-    if isinstance(node, Container):
-        for child in node.children:
-            print_layout_tree(child, indent + 1)
+        if isinstance(node, Container):
+            for child in node.children:
+                print_layout_tree(child, indent + 1)
