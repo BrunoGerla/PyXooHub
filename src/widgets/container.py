@@ -58,7 +58,7 @@ class VerticalContainer(Container):
             self, 
             x: int = 0, 
             y: int = 0, 
-            width: int = 64,
+            width: int | None = None,
             fixed_height: int | None = None,
             padding: int = 0,
             spacing: int = 1,
@@ -67,12 +67,12 @@ class VerticalContainer(Container):
             color: ColorValue | None = None,
             autosize: bool = True):
         super().__init__(x, y, children, color, autosize)
-        self.width = width
         self.padding = padding
         self.spacing = spacing
         self._align: Alignment = align
 
         self._fixed_height = fixed_height
+        self._fixed_width = width
 
         self.reposition()
 
@@ -90,8 +90,23 @@ class VerticalContainer(Container):
     def height(self, value):
         self._fixed_height = value
         self.reposition()
-        
 
+    @property
+    def width(self) -> int:
+        if self._fixed_width is not None:
+            return self._fixed_width
+        
+        if self.autosize:
+            content_width = (max(c.width for c in self.children if not getattr(c, 'is_spacer', False)))
+            return content_width + (self.padding * 2)
+    
+        return max(0, 64 - self.x)
+    
+    @width.setter
+    def width(self, value):
+        self._fixed_width = value
+        self.reposition()
+        
     def reposition(self):
         """Stacks children vertically."""
         content_height = self._get_content_height()
@@ -144,7 +159,7 @@ class HorizontalContainer(Container):
             x: int = 0, 
             y: int = 0, 
             width: int | None = None, # None = Flex to edge
-            height: int = 10,         # Fixed height for the row
+            height: int | None = None,
             padding: int = 0,
             spacing: int = 1,
             children: list[Widget] | None = None,
@@ -152,12 +167,12 @@ class HorizontalContainer(Container):
             color: ColorValue | None = None,
             autosize: bool = True):
         super().__init__(x, y, children, color, autosize)
-        self.height = height
         self.padding = padding
         self.spacing = spacing
         self._align: VerticalAlignment = align
 
         self._fixed_width = width
+        self._fixed_height = height
 
         self.reposition()
 
@@ -175,7 +190,25 @@ class HorizontalContainer(Container):
     def width(self, value):
         self._fixed_width = value
         self.reposition()
+
+    @property
+    def height(self) -> int:
+        if self._fixed_height is not None:
+            return self._fixed_height
         
+        if self.autosize:
+            if not self.children:
+                return 0
+            content_height = max((c.height for c in self.children if not getattr(c, 'is_spacer', False)), default=0)
+            return content_height + (self.padding * 2)
+        
+        return max(0, 64 - self.y)
+        
+    @height.setter
+    def height(self, value):
+        self._fixed_width = value
+        self.reposition()
+            
     def reposition(self):
         """Stacks children horizontally."""
         content_width = self._get_content_width()

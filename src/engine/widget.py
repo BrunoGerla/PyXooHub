@@ -10,7 +10,8 @@ class Widget(ABC):
     Abstract Base Class for all widgets.
     Enforces that every widget must have an update and draw method.
     """
-    def __init__(self, x: int = 0, y: int = 0, color: ColorValue | None = None):
+    def __init__(self, x: int = 0, y: int = 0, color: ColorValue | None = None, name: str | None = None):
+        self.name = name
         self.x = x
         self.y = y
 

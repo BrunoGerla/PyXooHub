@@ -26,12 +26,13 @@ class BarWidget(Widget):
                  color_map: dict[float, ColorValue] | None = None,
                  steps: int = 1, 
                  data_source: Callable[[], Any] | None = None,
-                 update_interval: float = 1.0):
+                 update_interval: float = 1.0,
+                 name: str | None = None):
         """
         Args:
             color_map: A dictionary of {upper_limit: ColorValue}.
         """
-        super().__init__(x, y, color)
+        super().__init__(x, y, color, name)
         self.width = width
         self.height = height
         self.percentage = self._clamp_percentage(percentage)

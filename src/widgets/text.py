@@ -25,8 +25,9 @@ class TextWidget(Widget):
             space_size: int = 4,
             data_source: Callable[[], Any] | None = None,
             update_interval: float = 1.0,
+            name: str | None = None,
             **kwargs):
-        super().__init__(x, y, color)
+        super().__init__(x, y, color, name, **kwargs)
 
         self.text = text
         self.char_spacing = character_spacing
@@ -103,12 +104,16 @@ class TextWidget(Widget):
         """
         Renders the current value of self.text.
         """
+
+        if self.current_color is None:
+            return
+        
         driver.draw_text(
             text=self.text,
             x=self.x,
             y=self.y,
             font=self.font,
-            color=self.color,
+            color=self.current_color,
             character_spacing=self.char_spacing,
             space_size=self.space_size
         )
