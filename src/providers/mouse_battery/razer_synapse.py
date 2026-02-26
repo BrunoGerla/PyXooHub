@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from providers.mouse_battery.base import MouseProvider
 from utils.logger import get_logger
+from utils.profiler import time_it
 
 logger = get_logger("RazerSynapseProvider")
 
@@ -32,6 +33,9 @@ class RazerSynapseProvider(MouseProvider):
     def update(self, dt: float) -> None:
         """Called every frame to process file timers."""
         current_time = time.time()
+
+        logger.debug(f"Checking update timer. Fetch: {current_time-self._last_check_time:.1f}s/{self._update_interval}s")
+
         if current_time - self._last_check_time > self._update_interval:
             self._poll_logs()
 
@@ -45,6 +49,7 @@ class RazerSynapseProvider(MouseProvider):
         """Pure getter. Returns the cached charging status."""
         return self._data.is_charging
 
+    @time_it(threshold_ms=5.0)
     def _poll_logs(self) -> None:
         """Checks the cached file for updates, or scans for a new file if the current one is idle."""
         self._last_check_time = time.time()
@@ -77,6 +82,7 @@ class RazerSynapseProvider(MouseProvider):
                 self._last_modified_time = latest_file.stat().st_mtime
                 self._parse_file(self._cached_file)
 
+    @time_it(threshold_ms=5.0)
     def _get_newest_file_in_dir(self) -> Path | None:
         """Helper to safely find the newest log file in the directory."""
         files = list(self._log_dir.glob("systray_systray*.log"))
@@ -84,6 +90,7 @@ class RazerSynapseProvider(MouseProvider):
             return None
         return max(files, key=lambda f: f.stat().st_mtime)
 
+    @time_it(threshold_ms=5.0)
     def _parse_file(self, filename: Path) -> None:
         """Reads the log backwards to extract and cache the latest device JSON payload."""
         try:

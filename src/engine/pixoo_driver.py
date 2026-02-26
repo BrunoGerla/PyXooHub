@@ -6,7 +6,8 @@ import base64
 import config
 from engine.font import Font
 from engine.color import Color
-from utils.logger import get_logger, configure_logging
+from utils.logger import get_logger
+from utils.profiler import time_it
 
 DriverColor = Color | tuple[int, int, int]
 
@@ -106,6 +107,7 @@ class PixooDriver:
         r, g, b = self._unpack_rgb(rgb)
         self.buffer = [r, g, b] * (self.width * self.height)
         
+    @time_it(threshold_ms=350.0)
     def push(self):
         """Sends the buffer to the Pixoo"""
         if not self.is_connected:

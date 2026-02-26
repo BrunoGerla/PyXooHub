@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from utils.geo import LocationProvider
 from utils.weather_codes import get_weather_description
 from utils.logger import get_logger, configure_logging
+from utils.profiler import time_it
 
 logger = get_logger("WeatherProvider")
 
@@ -56,6 +57,7 @@ class WeatherProvider:
         if current_time - self._last_fetch_time > self._update_interval:
             self._refresh()
 
+    @time_it(threshold_ms=5.0)
     def _refresh(self) -> None:
         """Performs the actual HTTP request to Open-Meteo."""
         logger.info("Refreshing Weather Information.")
