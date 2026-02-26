@@ -100,7 +100,8 @@ class RazerSynapseProvider(MouseProvider):
                             for device in json_data:
                                 if "powerStatus" in device:
                                     level = device["powerStatus"].get("level")
-                                    is_charging = device["powerStatus"].get("isCharging", False)
+                                    charging_status = device["powerStatus"].get("chargingStatus", False)
+                                    is_charging = True if charging_status == "Charging" else False
                                     
                                     if level is not None:
                                         new_battery_pct = float(level) / 100.0
