@@ -63,6 +63,7 @@ PIXOO_PORT = int(_get_env("PIXOO_PORT", "80")) # default to 80
 
 PIXOO_RETRIES: int = 3 # number of retries on connection
 PIXOO_TIMEOUT: int = 5 # number of seconds before timeout
+FRAME_INTERVAL: float = 0.5
 PIXOO_ASYNC_PUSH: bool = _get_bool_env("PIXOO_ASYNC_PUSH", True)
 PIXOO_SKIP_UNCHANGED_FRAMES: bool = _get_bool_env("PIXOO_SKIP_UNCHANGED_FRAMES", True)
 PIXOO_LOG_FRAME_STATUS_INTERVAL: int = _get_int_env("PIXOO_LOG_FRAME_STATUS_INTERVAL", 60)

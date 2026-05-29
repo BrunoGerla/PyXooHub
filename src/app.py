@@ -1,11 +1,10 @@
 import sys
-import time
 
 from typing import Callable, Type
 
-from engine.pixoo_driver import PixooDriver
+import config
+from engine.engine import PyXooEngine
 from utils.logger import get_logger, configure_logging
-from utils.container_tree import print_layout_tree
 from engine.dashboard import Dashboard
 
 DashboardBuilder = Callable[[], Dashboard] | Type[Dashboard]
@@ -49,49 +48,13 @@ def ask_dashboards(registry: dict[str, DashboardBuilder]) -> Dashboard:
 
 def main():
     logger.info("Starting PyXooHub Engine...")
-    
-    driver = PixooDriver()
 
     logger.info("Loading Dashboards...")
     registry = get_registry()
 
     current_dashboard = ask_dashboards(registry)
-
-    logger.info(f"Engine Loop Started with {current_dashboard.widget_count} widgets.")
-    print_layout_tree(current_dashboard)
-
-    # --- CONFIG ---
-    FRAME_INTERVAL = 0.5
-    last_time = time.time()
-
-    logger.info("Starting... Press CTRL + C to Stop")
-    
-    try:
-        while True:
-            current_time = time.time()
-            dt = current_time - last_time
-            last_time = current_time
-
-            # --- ENGINE UPDATE ---
-            # 1. Update logic (Clocks tick, data fetches)
-            current_dashboard.update(dt)
-            
-            # 2. Draw to buffer
-            driver.clear()
-            current_dashboard.draw(driver)
-            
-            # 3. Send to device
-            driver.push()
-
-            # --- SLEEP ---
-            now = time.time()
-            sleep_time = FRAME_INTERVAL - (now % FRAME_INTERVAL)
-            time.sleep(max(0, sleep_time)) 
-
-    except KeyboardInterrupt:
-        logger.info("Stopping...")
-    finally:
-        driver.close()
+    engine = PyXooEngine(current_dashboard, frame_interval=config.FRAME_INTERVAL)
+    engine.run_forever()
 
 if __name__ == "__main__":
     main()
