@@ -59,6 +59,10 @@ class PixooDriver:
         self._duplicate_skip_announced: bool = False
         self._status_log_interval = max(0, status_log_interval)
         self._last_status_log_time = time.monotonic()
+        self._last_status_sent_frames: int = 0
+        self._last_status_skipped_frames: int = 0
+        self._last_status_dropped_frames: int = 0
+        self._last_status_failed_frames: int = 0
 
         self._condition = threading.Condition()
         self._pending_frame: bytes | None = None
@@ -299,14 +303,24 @@ class PixooDriver:
         if now - self._last_status_log_time < self._status_log_interval:
             return
 
+        sent_delta = self._sent_frames - self._last_status_sent_frames
+        skipped_delta = self._skipped_frames - self._last_status_skipped_frames
+        dropped_delta = self._dropped_frames - self._last_status_dropped_frames
+        failed_delta = self._failed_frames - self._last_status_failed_frames
+
         logger.info(
-            "Pixoo sender active: "
-            f"{self._sent_frames} sent, "
-            f"{self._skipped_frames} unchanged skipped, "
-            f"{self._dropped_frames} stale queued frames dropped, "
-            f"{self._failed_frames} failed."
+            f"Pixoo sender active ({now - self._last_status_log_time:.0f}s): "
+            f"{sent_delta} sent, "
+            f"{skipped_delta} unchanged skipped, "
+            f"{dropped_delta} stale queued frames dropped, "
+            f"{failed_delta} failed."
         )
+
         self._last_status_log_time = now
+        self._last_status_sent_frames = self._sent_frames
+        self._last_status_skipped_frames = self._skipped_frames
+        self._last_status_dropped_frames = self._dropped_frames
+        self._last_status_failed_frames = self._failed_frames
 
     def _should_reset_before_push(self) -> bool:
         if self.reset_policy == "never":
