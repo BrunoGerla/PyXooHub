@@ -5,3 +5,4 @@ __pycache__/
 logs/
 .vscode/
 src/dashboards.py
+.ruff_cache/

@@ -1,4 +1,3 @@
-from engine.color import Colors
 from engine.widget import Widget
 
 class Gap(Widget):
@@ -10,5 +9,8 @@ class Gap(Widget):
         self.width = size
         self.height = size
 
-    def update(self, dt: float): pass
-    def draw(self, driver): pass
+    def update(self, dt: float) -> bool:
+        return False
+
+    def draw(self, driver):
+        pass

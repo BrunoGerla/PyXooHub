@@ -30,14 +30,16 @@ class RazerSynapseProvider(MouseProvider):
         logger.debug(f"Razer Synapse Log Directory: {self._log_dir}")
         self._poll_logs() # Initial fetch
 
-    def update(self, dt: float) -> None:
+    def update(self, dt: float) -> bool:
         """Called every frame to process file timers."""
         current_time = time.time()
 
         logger.debug(f"Checking update timer. Fetch: {current_time-self._last_check_time:.1f}s/{self._update_interval}s")
 
         if current_time - self._last_check_time > self._update_interval:
-            self._poll_logs()
+            return self._poll_logs()
+
+        return False
 
     @property
     def battery_percentage(self) -> float:
@@ -50,28 +52,28 @@ class RazerSynapseProvider(MouseProvider):
         return self._data.is_charging
 
     @time_it(threshold_ms=5.0)
-    def _poll_logs(self) -> None:
+    def _poll_logs(self) -> bool:
         """Checks the cached file for updates, or scans for a new file if the current one is idle."""
         self._last_check_time = time.time()
 
         if not self._log_dir.exists():
-            return
+            return False
 
         if not self._cached_file or not self._cached_file.exists():
             self._cached_file = self._get_newest_file_in_dir()
             if not self._cached_file:
-                return
+                return False
             
             self._last_modified_time = self._cached_file.stat().st_mtime
-            self._parse_file(self._cached_file)
-            return
+            return self._parse_file(self._cached_file)
 
         current_mtime = self._cached_file.stat().st_mtime
         
         if current_mtime > self._last_modified_time:
             logger.debug(f"Log modified. Reading {self._cached_file.name}")
-            self._parse_file(self._cached_file)
+            changed = self._parse_file(self._cached_file)
             self._last_modified_time = current_mtime
+            return changed
             
         else:
             latest_file = self._get_newest_file_in_dir()
@@ -80,7 +82,9 @@ class RazerSynapseProvider(MouseProvider):
                 logger.info(f"New log file detected: {latest_file.name}")
                 self._cached_file = latest_file
                 self._last_modified_time = latest_file.stat().st_mtime
-                self._parse_file(self._cached_file)
+                return self._parse_file(self._cached_file)
+
+        return False
 
     @time_it(threshold_ms=5.0)
     def _get_newest_file_in_dir(self) -> Path | None:
@@ -91,7 +95,7 @@ class RazerSynapseProvider(MouseProvider):
         return max(files, key=lambda f: f.stat().st_mtime)
 
     @time_it(threshold_ms=5.0)
-    def _parse_file(self, filename: Path) -> None:
+    def _parse_file(self, filename: Path) -> bool:
         """Reads the log backwards to extract and cache the latest device JSON payload."""
         try:
             with filename.open("r", encoding="utf-8", errors="ignore") as f:
@@ -118,13 +122,16 @@ class RazerSynapseProvider(MouseProvider):
                                             self._data.battery_percentage = new_battery_pct
                                             self._data.is_charging = is_charging
                                             logger.info(f"Razer Mouse Updated -> Battery: {new_battery_pct * 100:.0f}% | Charging: {is_charging}")
+                                            return True
                                             
-                                        return 
+                                        return False
 
                         except json.JSONDecodeError:
                             continue
         except Exception as e:
             logger.error(f"Failed to parse log file: {e}")
+
+        return False
 
 if __name__ == "__main__":
     provider = RazerSynapseProvider()

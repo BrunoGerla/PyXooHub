@@ -6,7 +6,7 @@ class MouseProvider(ABC):
     """
 
     @abstractmethod
-    def update(self, dt: float) -> None:
+    def update(self, dt: float) -> bool:
         """
         Called every frame by the dashboard to handle background logic, 
         polling, or data fetching.

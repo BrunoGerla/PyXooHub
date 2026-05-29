@@ -25,9 +25,9 @@ class Color:
 
     def _validate_channel(self, value: int) -> int:
         if not isinstance(value, int):
-            raise TypeError(f"Color Channel Value must be of type Integer.")
+            raise TypeError("Color Channel Value must be of type Integer.")
         if not (0 <= value <= 255):
-            raise ValueError(f"Color Channel Value must be between 0 and 255.")
+            raise ValueError("Color Channel Value must be between 0 and 255.")
         return value
     
     @staticmethod
