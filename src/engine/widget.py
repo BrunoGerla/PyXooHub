@@ -17,10 +17,11 @@ class Widget(ABC):
 
         self._width = 0
         self._height = 0
+        self._is_dirty = True
+        self._current_color: Color | None = None
         
         self.color = Color.parse(color) if color else None
         self.current_color = self.color
-        self._is_dirty = True
 
     @property
     def is_dirty(self) -> bool:
@@ -39,13 +40,27 @@ class Widget(ABC):
     @property
     def height(self) -> int:
         return self._height
+
+    @property
+    def current_color(self) -> Color | None:
+        return self._current_color
+
+    @current_color.setter
+    def current_color(self, value: Color | None):
+        if value != self._current_color:
+            self._current_color = value
+            self.mark_dirty()
     
     @width.setter
     def width(self, value: int):
+        if value != self._width:
+            self.mark_dirty()
         self._width = value
 
     @height.setter
     def height(self, value: int):
+        if value != self._height:
+            self.mark_dirty()
         self._height = value
 
     @property
