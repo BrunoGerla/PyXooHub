@@ -55,6 +55,7 @@ class PixooDriver:
         self._sent_frames: int = 0
         self._skipped_frames: int = 0
         self._dropped_frames: int = 0
+        self._failed_frames: int = 0
         self._duplicate_skip_announced: bool = False
         self._status_log_interval = max(0, status_log_interval)
         self._last_status_log_time = time.monotonic()
@@ -178,6 +179,10 @@ class PixooDriver:
             return self._send_frame(frame)
 
         with self._condition:
+            if self._worker_thread is None or not self._worker_thread.is_alive():
+                logger.warning("Pixoo async frame worker was not running. Restarting it now.")
+                self._start_worker()
+
             if self._pending_frame is not None:
                 self._dropped_frames += 1
                 logger.debug("Replacing queued Pixoo frame with the newest frame.")
@@ -228,6 +233,7 @@ class PixooDriver:
             self._log_status_if_due()
             return True
         except RequestException as e:
+            self._failed_frames += 1
             logger.warning(f"Pixoo frame push failed: {e}")
             self.is_connected = False
             self._needs_reset = True
@@ -258,6 +264,12 @@ class PixooDriver:
             try:
                 if frame is not None:
                     self._send_frame(frame)
+            except Exception:
+                self._failed_frames += 1
+                self.is_connected = False
+                self._needs_reset = True
+                logger.error("Unexpected error in Pixoo async frame worker. The worker will keep running.")
+                logger.debug("Pixoo async frame worker exception details.", exc_info=True)
             finally:
                 with self._condition:
                     self._worker_busy = False
@@ -291,7 +303,8 @@ class PixooDriver:
             "Pixoo sender active: "
             f"{self._sent_frames} sent, "
             f"{self._skipped_frames} unchanged skipped, "
-            f"{self._dropped_frames} stale queued frames dropped."
+            f"{self._dropped_frames} stale queued frames dropped, "
+            f"{self._failed_frames} failed."
         )
         self._last_status_log_time = now
 
@@ -332,6 +345,7 @@ class PixooDriver:
             )
             response.raise_for_status()
         except RequestException as e:
+            self._failed_frames += 1
             logger.warning(f"Pixoo HTTP GIF reset failed: {e}")
             self.is_connected = False
             self._needs_reset = True
