@@ -7,6 +7,7 @@ from widgets.container import VerticalContainer, HorizontalContainer
 from widgets.text import TextWidget
 from widgets.datetime import DateTimeWidget
 from widgets.bar import BarWidget
+from widgets.blink import BlinkWidget
 from widgets.spacer import Spacer
 from widgets.gap import Gap
 
@@ -22,6 +23,7 @@ def build_cyberpunk_dashboard() -> Dashboard:
     
     # --- WIDGET DEFINITIONS ---
     header_label = TextWidget(text="SYS.RDY", x=2, y=2, font=resources.small_font, color=Colors.CYAN)
+    heartbeat = BlinkWidget(x=59, y=2, width=3, height=3, color=Colors.GREEN, interval=0.5, name="Heartbeat")
     
     header_line = BarWidget(x=0, y=9, width=64, height=1, percentage=1.0, color=Colors.CYAN, outline=False)
 
@@ -36,7 +38,7 @@ def build_cyberpunk_dashboard() -> Dashboard:
 
     footer_text = TextWidget(text="NO DATA", x=18, y=56, font=resources.small_font, color=Colors.RED)
 
-    widgets = [header_label, header_line, clock_widget, seconds_widget, left_bar, right_bar, footer_text]
+    widgets = [header_label, heartbeat, header_line, clock_widget, seconds_widget, left_bar, right_bar, footer_text]
 
     # --- DASHBOARD CREATION ---
     return Dashboard(
