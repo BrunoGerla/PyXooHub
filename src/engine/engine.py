@@ -27,6 +27,8 @@ class PyXooEngine:
         self.is_running = False
         self._is_closed = False
         self.frame_count = 0
+        self.rendered_frame_count = 0
+        self.skipped_clean_frames = 0
         self.started_at: float | None = None
         self._last_tick = time.monotonic()
 
@@ -68,9 +70,12 @@ class PyXooEngine:
 
         elapsed = self._elapsed_seconds()
         if elapsed > 0:
-            logger.info(f"Engine stopped after {self.frame_count} frames in {elapsed:.1f}s.")
+            logger.info(
+                f"Engine stopped after {self.frame_count} ticks in {elapsed:.1f}s "
+                f"({self.rendered_frame_count} rendered, {self.skipped_clean_frames} clean skipped)."
+            )
         else:
-            logger.info(f"Engine stopped after {self.frame_count} frames.")
+            logger.info(f"Engine stopped after {self.frame_count} ticks.")
 
     def tick(self) -> bool:
         """Runs one update/draw/push cycle. Returns True when a frame was queued."""
@@ -79,12 +84,17 @@ class PyXooEngine:
         self._last_tick = current_time
 
         self.dashboard.update(dt)
+        self.frame_count += 1
+
+        if not self.dashboard.is_dirty:
+            self.skipped_clean_frames += 1
+            return False
 
         self.driver.clear()
         self.dashboard.draw(self.driver)
 
         queued = self.driver.push()
-        self.frame_count += 1
+        self.rendered_frame_count += 1
         return queued
 
     def _sleep_until_next_frame(self):

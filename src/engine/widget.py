@@ -20,6 +20,17 @@ class Widget(ABC):
         
         self.color = Color.parse(color) if color else None
         self.current_color = self.color
+        self._is_dirty = True
+
+    @property
+    def is_dirty(self) -> bool:
+        return self._is_dirty
+
+    def mark_dirty(self):
+        self._is_dirty = True
+
+    def mark_clean(self):
+        self._is_dirty = False
 
     @property
     def width(self) -> int:
@@ -51,7 +62,7 @@ class Widget(ABC):
         return self.width, self.height
 
     @abstractmethod
-    def update(self, dt: float):
+    def update(self, dt: float) -> bool | None:
         """
         Update the widget's state and effects.
         dt: Delta Time in seconds (time since last frame)
