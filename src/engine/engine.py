@@ -25,6 +25,7 @@ class PyXooEngine:
         self.print_layout = print_layout
 
         self.is_running = False
+        self._is_closed = False
         self.frame_count = 0
         self.started_at: float | None = None
         self._last_tick = time.monotonic()
@@ -58,12 +59,18 @@ class PyXooEngine:
 
     def stop(self):
         """Stops the engine and closes the frame driver."""
-        if not self.is_running and self.driver is None:
+        if self._is_closed:
             return
 
         self.is_running = False
         self.driver.close()
-        logger.info(f"Engine stopped after {self.frame_count} frames.")
+        self._is_closed = True
+
+        elapsed = self._elapsed_seconds()
+        if elapsed > 0:
+            logger.info(f"Engine stopped after {self.frame_count} frames in {elapsed:.1f}s.")
+        else:
+            logger.info(f"Engine stopped after {self.frame_count} frames.")
 
     def tick(self) -> bool:
         """Runs one update/draw/push cycle. Returns True when a frame was queued."""
@@ -87,3 +94,9 @@ class PyXooEngine:
         now = time.monotonic()
         sleep_time = self.frame_interval - (now % self.frame_interval)
         time.sleep(max(0, sleep_time))
+
+    def _elapsed_seconds(self) -> float:
+        if self.started_at is None:
+            return 0.0
+
+        return time.monotonic() - self.started_at
