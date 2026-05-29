@@ -8,8 +8,8 @@ class Spacer(Widget):
         super().__init__(0, 0)
         self.is_spacer = True
     
-    def update(self, dt: float):
-        pass
+    def update(self, dt: float) -> bool:
+        return False
 
     def draw(self, driver):
         pass

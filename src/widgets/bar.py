@@ -56,12 +56,21 @@ class BarWidget(Widget):
 
     def set_percentage(self, percentage: float):
         """Updates the bar's percentage (0.0 to 1.0)"""
+        previous_percentage = self.percentage
+        previous_color = self.current_color
+
         self.percentage = self._clamp_percentage(percentage)
         self._update_color()
 
-    def update(self, dt: float):
+        changed = self.percentage != previous_percentage or self.current_color != previous_color
+        if changed:
+            self.mark_dirty()
+
+        return changed
+
+    def update(self, dt: float) -> bool:
         if self.data_source is None:
-            return
+            return False
         
         self.timer += dt
 
@@ -69,12 +78,14 @@ class BarWidget(Widget):
             value = self._fetch_data()
 
             if value is not None:
-                self.set_percentage(value)
+                changed = self.set_percentage(value)
             else:
-                self.percentage = 1
-                self.current_color = Colors.RED
+                changed = self._set_error_state()
 
             self.timer -= self.update_interval
+            return changed
+
+        return False
 
     def _fetch_data(self) -> float | None:
         if self.data_source is None:
@@ -98,6 +109,19 @@ class BarWidget(Widget):
                 return
             
         self.current_color = self.default_color
+
+    def _set_error_state(self) -> bool:
+        previous_percentage = self.percentage
+        previous_color = self.current_color
+
+        self.percentage = 1
+        self.current_color = Colors.RED
+
+        changed = self.percentage != previous_percentage or self.current_color != previous_color
+        if changed:
+            self.mark_dirty()
+
+        return changed
 
     def draw(self, driver: PixooDriver):
         # determine orientation. If square, we still want to load bottom to top.

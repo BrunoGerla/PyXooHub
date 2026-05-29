@@ -79,26 +79,36 @@ class TextWidget(Widget):
     def height(self, value):
         logger.warning("Attempted to manually set height of TextWidget. This is ignored because height is calculated dynamically.")
 
-    def update(self, dt: float):
+    def update(self, dt: float) -> bool:
         if self.data_source is None:
-            return
+            return False
         
         self.timer += dt
 
         if self.timer >= self.update_interval:
-            self._fetch_data()
+            changed = self._fetch_data()
             self.timer -= self.update_interval
+            return changed
 
-    def _fetch_data(self):
+        return False
+
+    def _fetch_data(self) -> bool:
         if self.data_source is None:
-            return
+            return False
         
         try:
             new_value = self.data_source()
-            self.text = str(new_value)
+            new_text = str(new_value)
         except Exception as e:
             logger.error(f"Failed to fetch data and update text: {e}")
-            self.text = "ERR"
+            new_text = "ERR"
+
+        if new_text == self.text:
+            return False
+
+        self.text = new_text
+        self.mark_dirty()
+        return True
 
     def draw(self, driver: PixooDriver):
         """

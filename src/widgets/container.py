@@ -19,6 +19,15 @@ class Container(Widget):
         self.autosize = autosize
 
     @property
+    def is_dirty(self) -> bool:
+        return self._is_dirty or any(child.is_dirty for child in self.children)
+
+    def mark_clean(self):
+        super().mark_clean()
+        for child in self.children:
+            child.mark_clean()
+
+    @property
     def widget_count(self) -> int:
         """
         Recursive count: 1 (Self) + Sum(Children)
@@ -28,19 +37,27 @@ class Container(Widget):
     def add_widget(self, widget: Widget):
         self.children.append(widget)
         self.reposition()
+        self.mark_dirty()
 
     def remove_widget(self, widget: Widget):
         self.children.remove(widget)
         self.reposition()
+        self.mark_dirty()
 
     @abstractmethod
     def reposition(self):
         """Must be implemented by subclasses to reposition children"""
         pass
 
-    def update(self, dt: float):
+    def update(self, dt: float) -> bool:
+        changed = False
         for child in self.children:
-            child.update(dt)
+            changed = bool(child.update(dt)) or changed
+
+        if changed:
+            self.mark_dirty()
+
+        return changed
 
     def draw(self, driver: PixooDriver):
         if self.color:
@@ -111,12 +128,14 @@ class VerticalContainer(Container):
         
     def reposition(self):
         """Stacks children vertically."""
+        changed = False
         content_height = self._get_content_height()
-        self._set_spacer_height(content_height)
+        changed = self._set_spacer_height(content_height) or changed
         
         current_y = self.y + self.padding
 
         for i, child in enumerate(self.children):
+            previous_position = (child.x, child.y)
             if self._align == "center":
                 child.x = self.x + (self.width - child.width) // 2
             elif self._align == "right":
@@ -125,6 +144,10 @@ class VerticalContainer(Container):
                 child.x = self.x + self.padding
 
             child.y = current_y
+
+            if (child.x, child.y) != previous_position:
+                child.mark_dirty()
+                changed = True
             
             if isinstance(child, Container):
                 child.reposition()
@@ -137,6 +160,9 @@ class VerticalContainer(Container):
                 is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
                 if not is_this_spacer and not is_next_spacer:
                     current_y += self.spacing
+
+        if changed:
+            self.mark_dirty()
 
     def _get_content_height(self) -> int:
         if not self.children:
@@ -157,14 +183,20 @@ class VerticalContainer(Container):
         content_height += self.padding * 2
         return content_height
     
-    def _set_spacer_height(self, used_height: int):
+    def _set_spacer_height(self, used_height: int) -> bool:
+        changed = False
         spacers = [c for c in self.children if getattr(c, 'is_spacer', False)]
         if spacers:
             remaining_space = max(0, self.height - used_height)
             space_per_spacer = remaining_space // len(spacers)
 
             for spacer in spacers:
-                spacer.height = space_per_spacer
+                if spacer.height != space_per_spacer:
+                    spacer.height = space_per_spacer
+                    spacer.mark_dirty()
+                    changed = True
+
+        return changed
 
 
 class HorizontalContainer(Container):
@@ -226,12 +258,14 @@ class HorizontalContainer(Container):
             
     def reposition(self):
         """Stacks children horizontally."""
+        changed = False
         content_width = self._get_content_width()
-        self._set_spacer_width(content_width)
+        changed = self._set_spacer_width(content_width) or changed
         
         current_x = self.x + self.padding
 
         for i, child in enumerate(self.children):
+            previous_position = (child.x, child.y)
             # Vertical Alignment Logic (Cross-Axis)
             if self._align == "center":
                 child.y = self.y + (self.height - child.height) // 2
@@ -242,6 +276,10 @@ class HorizontalContainer(Container):
 
             # Horizontal Stacking (Main-Axis)
             child.x = current_x
+
+            if (child.x, child.y) != previous_position:
+                child.mark_dirty()
+                changed = True
             
             if isinstance(child, Container):
                 child.reposition()
@@ -254,6 +292,9 @@ class HorizontalContainer(Container):
                 is_next_spacer = getattr(self.children[i+1], 'is_spacer', False)
                 if not is_this_spacer and not is_next_spacer:
                     current_x += self.spacing
+
+        if changed:
+            self.mark_dirty()
 
     def _get_content_width(self) -> int:
         if not self.children:
@@ -274,11 +315,17 @@ class HorizontalContainer(Container):
         content_width += self.padding * 2
         return content_width
     
-    def _set_spacer_width(self, used_width: int):
+    def _set_spacer_width(self, used_width: int) -> bool:
+        changed = False
         spacers = [c for c in self.children if getattr(c, 'is_spacer', False)]
         if spacers:
             remaining_space = max(0, self.width - used_width)
             space_per_spacer = remaining_space // len(spacers)
 
             for spacer in spacers:
-                spacer.width = space_per_spacer
+                if spacer.width != space_per_spacer:
+                    spacer.width = space_per_spacer
+                    spacer.mark_dirty()
+                    changed = True
+
+        return changed
