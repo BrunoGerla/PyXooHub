@@ -23,3 +23,8 @@ dependencies = [
     "urllib3==2.6.3",
     "werkzeug==3.1.5",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.15",
+]

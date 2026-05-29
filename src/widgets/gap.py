@@ -1,4 +1,3 @@
-from engine.color import Colors
 from engine.widget import Widget
 
 class Gap(Widget):

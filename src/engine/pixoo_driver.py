@@ -2,6 +2,8 @@ import requests
 import time
 from requests.exceptions import RequestException
 import base64
+import threading
+from typing import Literal
 
 import config
 from engine.font import Font
@@ -10,11 +12,22 @@ from utils.logger import get_logger
 from utils.profiler import time_it
 
 DriverColor = Color | tuple[int, int, int]
+ResetReason = Literal["first frame", "periodic refresh", "reconnect", "manual policy"]
 
 logger = get_logger("PixooDriver")
 
 class PixooDriver:
-    def __init__(self, ip_address: str = config.PIXOO_IP, port: int = config.PIXOO_PORT, retries: int = config.PIXOO_RETRIES, timeout: int = config.PIXOO_TIMEOUT):
+    def __init__(
+            self,
+            ip_address: str = config.PIXOO_IP,
+            port: int = config.PIXOO_PORT,
+            retries: int = config.PIXOO_RETRIES,
+            timeout: int = config.PIXOO_TIMEOUT,
+            async_push: bool = config.PIXOO_ASYNC_PUSH,
+            reset_policy: config.ResetPolicy = config.PIXOO_RESET_POLICY,
+            reset_every_frames: int = config.PIXOO_RESET_EVERY_FRAMES,
+            skip_unchanged_frames: bool = config.PIXOO_SKIP_UNCHANGED_FRAMES,
+            status_log_interval: int = config.PIXOO_LOG_FRAME_STATUS_INTERVAL):
         self.ip: str = ip_address
         self.port: int = port
         self.retries: int = retries
@@ -31,8 +44,32 @@ class PixooDriver:
 
         self.buffer = [0] * (self.width * self.height * 3)
 
+        # frame delivery
+        self.async_push = async_push
+        self.reset_policy = reset_policy
+        self.reset_every_frames = max(0, reset_every_frames)
+        self.skip_unchanged_frames = skip_unchanged_frames
+        self._needs_reset: bool = True
+        self._frames_since_reset: int = 0
+        self._last_submitted_frame: bytes | None = None
+        self._sent_frames: int = 0
+        self._skipped_frames: int = 0
+        self._dropped_frames: int = 0
+        self._duplicate_skip_announced: bool = False
+        self._status_log_interval = max(0, status_log_interval)
+        self._last_status_log_time = time.monotonic()
+
+        self._condition = threading.Condition()
+        self._pending_frame: bytes | None = None
+        self._worker_busy: bool = False
+        self._worker_stop: bool = False
+        self._worker_thread: threading.Thread | None = None
+
         # initial connect
         self.connect()
+
+        if self.async_push:
+            self._start_worker()
 
     def connect(self) -> bool:
         """
@@ -43,7 +80,8 @@ class PixooDriver:
         for attempt in range(1, self.retries + 1):
             if self._perform_handshake():
                 self.is_connected = True
-                logger.info(f"Succesfully connected to the Pixoo!")
+                self._needs_reset = True
+                logger.info("Successfully connected to the Pixoo.")
                 return True
             
             logger.warning(f"Connection attempt {attempt}/{self.retries} failed. Retrying in {self.timeout}s...")
@@ -52,6 +90,23 @@ class PixooDriver:
         logger.critical(f"Failed to connect to Pixoo at {self.ip}. Is the IP correct?")
         self.is_connected = False
         return False
+
+    def close(self, flush: bool = True):
+        """Stops the async worker, optionally sending the newest queued frame first."""
+        if not self.async_push or self._worker_thread is None:
+            return
+
+        with self._condition:
+            if not flush:
+                self._pending_frame = None
+            self._worker_stop = True
+            self._condition.notify_all()
+
+        self._worker_thread.join(timeout=self.timeout + 1)
+        if self._worker_thread.is_alive():
+            logger.warning("Pixoo frame worker did not stop before timeout.")
+        else:
+            logger.info("Pixoo frame worker stopped.")
         
     # -- GRAPHICS ENGINE LOGIC --
     def clear(self):
@@ -107,20 +162,45 @@ class PixooDriver:
         r, g, b = self._unpack_rgb(rgb)
         self.buffer = [r, g, b] * (self.width * self.height)
         
+    def push(self) -> bool:
+        """Queues the current buffer for delivery to the Pixoo."""
+        frame = bytes(self.buffer)
+
+        if self._should_skip_frame(frame):
+            self._skipped_frames += 1
+            self._log_duplicate_skip_once()
+            self._log_status_if_due()
+            return False
+
+        self._last_submitted_frame = frame
+
+        if not self.async_push:
+            return self._send_frame(frame)
+
+        with self._condition:
+            if self._pending_frame is not None:
+                self._dropped_frames += 1
+                logger.debug("Replacing queued Pixoo frame with the newest frame.")
+
+            self._pending_frame = frame
+            self._condition.notify()
+
+        return True
+
     @time_it(threshold_ms=350.0)
-    def push(self):
-        """Sends the buffer to the Pixoo"""
+    def _send_frame(self, frame: bytes) -> bool:
+        """Sends one frame to the Pixoo."""
         if not self.is_connected:
-            logger.warning("Cannot push frame: Device disconnected.")
+            logger.warning("Pixoo is disconnected. Trying to reconnect before sending a frame.")
             if not self.connect():
-                return
+                return False
 
-        try:
-            self.session.post(self.base_url, json={"Command": "Draw/ResetHttpGifId"}, timeout=self.timeout)
-        except Exception:
-            pass
+        if self._should_reset_before_push():
+            reason = self._get_reset_reason()
+            if not self._reset_http_gif_id(reason):
+                return False
 
-        pixel_data = base64.b64encode(bytes(self.buffer)).decode('utf-8')
+        pixel_data = base64.b64encode(frame).decode("utf-8")
 
         payload = {
             "Command": "Draw/SendHttpGif",
@@ -134,10 +214,137 @@ class PixooDriver:
 
         try:
             logger.debug("Pushing request!")
-            self.session.post(self.base_url, json=payload, timeout=config.PIXOO_TIMEOUT)
-        except Exception as e:
-            logger.error(f"Push failed: {e}")
+            response = self.session.post(self.base_url, json=payload, timeout=self.timeout)
+            response.raise_for_status()
+
+            self.is_connected = True
+            self._sent_frames += 1
+            self._frames_since_reset += 1
+
+            if self._sent_frames == 1:
+                mode = "async" if self.async_push else "sync"
+                logger.info(f"First Pixoo frame sent ({mode}, reset policy: {self.reset_policy}).")
+
+            self._log_status_if_due()
+            return True
+        except RequestException as e:
+            logger.warning(f"Pixoo frame push failed: {e}")
             self.is_connected = False
+            self._needs_reset = True
+            return False
+
+    def _start_worker(self):
+        self._worker_thread = threading.Thread(
+            target=self._frame_worker,
+            name="PixooFrameWorker",
+            daemon=True
+        )
+        self._worker_thread.start()
+        logger.info("Pixoo async frame worker started.")
+
+    def _frame_worker(self):
+        while True:
+            with self._condition:
+                while self._pending_frame is None and not self._worker_stop:
+                    self._condition.wait(timeout=0.5)
+
+                if self._worker_stop and self._pending_frame is None:
+                    return
+
+                frame = self._pending_frame
+                self._pending_frame = None
+                self._worker_busy = True
+
+            try:
+                if frame is not None:
+                    self._send_frame(frame)
+            finally:
+                with self._condition:
+                    self._worker_busy = False
+                    self._condition.notify_all()
+
+    def _should_skip_frame(self, frame: bytes) -> bool:
+        if not self.skip_unchanged_frames:
+            return False
+
+        if self._last_submitted_frame != frame:
+            return False
+
+        return self.is_connected and not self._needs_reset
+
+    def _log_duplicate_skip_once(self):
+        if self._duplicate_skip_announced:
+            return
+
+        logger.info("No pixel changes detected; skipping duplicate Pixoo frames until the dashboard changes.")
+        self._duplicate_skip_announced = True
+
+    def _log_status_if_due(self):
+        if self._status_log_interval <= 0:
+            return
+
+        now = time.monotonic()
+        if now - self._last_status_log_time < self._status_log_interval:
+            return
+
+        logger.info(
+            "Pixoo sender active: "
+            f"{self._sent_frames} sent, "
+            f"{self._skipped_frames} unchanged skipped, "
+            f"{self._dropped_frames} stale queued frames dropped."
+        )
+        self._last_status_log_time = now
+
+    def _should_reset_before_push(self) -> bool:
+        if self.reset_policy == "never":
+            return False
+
+        if self.reset_policy == "always":
+            return True
+
+        if self._needs_reset:
+            return True
+
+        return (
+            self.reset_policy == "periodic"
+            and self.reset_every_frames > 0
+            and self._frames_since_reset >= self.reset_every_frames
+        )
+
+    def _get_reset_reason(self) -> ResetReason:
+        if self.reset_policy == "always":
+            return "manual policy"
+
+        if self._needs_reset and self._sent_frames == 0:
+            return "first frame"
+
+        if self._needs_reset:
+            return "reconnect"
+
+        return "periodic refresh"
+
+    def _reset_http_gif_id(self, reason: ResetReason) -> bool:
+        try:
+            response = self.session.post(
+                self.base_url,
+                json={"Command": "Draw/ResetHttpGifId"},
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+        except RequestException as e:
+            logger.warning(f"Pixoo HTTP GIF reset failed: {e}")
+            self.is_connected = False
+            self._needs_reset = True
+            return False
+
+        self._needs_reset = False
+        self._frames_since_reset = 0
+        if reason in {"first frame", "reconnect"}:
+            logger.info(f"Pixoo HTTP GIF slot reset ({reason}).")
+        else:
+            logger.debug(f"Pixoo HTTP GIF slot reset ({reason}).")
+
+        return True
 
     # Helpers
     def _perform_handshake(self) -> bool:
@@ -158,7 +365,7 @@ class PixooDriver:
                 return False
             
             try:
-                data = response.json()
+                response.json()
             except ValueError:
                 logger.debug("Handshake rejected: Response was not valid JSON.")
                 return False
@@ -191,3 +398,4 @@ if __name__ == "__main__":
     pixoo.draw_text("TEST", 1, 20, small_font, (255, 0 , 0), space_size=1)
     pixoo.draw_text("11:53", 1, 26, small_font, (0, 255, 0))
     pixoo.push()
+    pixoo.close()

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from engine.pixoo_driver import PixooDriver
-from engine.color import Color, Colors, ColorValue
+from engine.color import Color, ColorValue
 from utils.logger import get_logger
 
 logger = get_logger("Widget")

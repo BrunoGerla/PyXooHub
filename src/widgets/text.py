@@ -2,8 +2,8 @@ from typing import Callable, Any
 
 from engine.widget import Widget
 from engine.pixoo_driver import PixooDriver
-from engine.font import Font, GlyphData
-from engine.color import Color, Colors, ColorValue
+from engine.font import Font
+from engine.color import Colors, ColorValue
 
 from utils.logger import get_logger
 

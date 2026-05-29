@@ -128,7 +128,8 @@ class BarWidget(Widget):
             fill_x, fill_y = start_x, start_y
             fill_w, fill_h = draw_w, draw_h
 
-        if fill_w <= 0 or fill_h <= 0: return
+        if fill_w <= 0 or fill_h <= 0:
+            return
         
         if is_vertical:
             total_pixels = fill_h * self.percentage

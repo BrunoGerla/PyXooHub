@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Literal
 
 from engine.pixoo_driver import PixooDriver
-from engine.color import Color, Colors, ColorValue
+from engine.color import ColorValue
 from engine.widget import Widget
 
 Alignment = Literal["left", "center", "right"]

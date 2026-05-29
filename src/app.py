@@ -1,6 +1,5 @@
 import sys
 import time
-import config
 
 from typing import Callable, Type
 
@@ -91,6 +90,8 @@ def main():
 
     except KeyboardInterrupt:
         logger.info("Stopping...")
+    finally:
+        driver.close()
 
 if __name__ == "__main__":
     main()

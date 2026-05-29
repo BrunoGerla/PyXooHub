@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from typing import Any
+from typing import Literal, cast
 
 load_dotenv()
 
@@ -27,11 +27,50 @@ def _get_env(key: str, default: str | None = None) -> str:
         return default
     return value
 
+def _get_bool_env(key: str, default: bool) -> bool:
+    value = os.getenv(key)
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+def _get_int_env(key: str, default: int) -> int:
+    value = os.getenv(key)
+    if value is None:
+        return default
+
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"CRITICAL: Environment variable '{key}' must be an integer.") from exc
+
+ResetPolicy = Literal["always", "periodic", "first", "never"]
+
+def _get_reset_policy() -> ResetPolicy:
+    value = _get_env("PIXOO_RESET_POLICY", "always").strip().lower()
+    valid_policies: set[ResetPolicy] = {"always", "periodic", "first", "never"}
+
+    if value not in valid_policies:
+        raise ValueError(
+            "CRITICAL: PIXOO_RESET_POLICY must be one of: "
+            f"{', '.join(sorted(valid_policies))}."
+        )
+
+    return cast(ResetPolicy, value)
+
 PIXOO_IP = _get_env("PIXOO_IP")
 PIXOO_PORT = int(_get_env("PIXOO_PORT", "80")) # default to 80
 
 PIXOO_RETRIES: int = 3 # number of retries on connection
 PIXOO_TIMEOUT: int = 5 # number of seconds before timeout
+PIXOO_ASYNC_PUSH: bool = _get_bool_env("PIXOO_ASYNC_PUSH", True)
+PIXOO_SKIP_UNCHANGED_FRAMES: bool = _get_bool_env("PIXOO_SKIP_UNCHANGED_FRAMES", True)
+PIXOO_LOG_FRAME_STATUS_INTERVAL: int = _get_int_env("PIXOO_LOG_FRAME_STATUS_INTERVAL", 60)
+
+# Resetting the HTTP GIF id clears the Pixoo's uploaded animation slot. The Pixoo is most reliable
+# when this happens before each replacement frame; experimental policies can reduce HTTP chatter.
+PIXOO_RESET_POLICY: ResetPolicy = _get_reset_policy()
+PIXOO_RESET_EVERY_FRAMES: int = _get_int_env("PIXOO_RESET_EVERY_FRAMES", 120)
 
 # Log settings
 LOG_FILE_NAME = "pyxoo.log"
