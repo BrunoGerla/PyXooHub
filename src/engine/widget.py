@@ -12,13 +12,16 @@ class Widget(ABC):
     """
     def __init__(self, x: int = 0, y: int = 0, color: ColorValue | None = None, name: str | None = None):
         self.name = name
-        self.x = x
-        self.y = y
 
+        self._is_dirty = True
+        self._x = 0
+        self._y = 0
         self._width = 0
         self._height = 0
-        self._is_dirty = True
         self._current_color: Color | None = None
+
+        self.x = x
+        self.y = y
         
         self.color = Color.parse(color) if color else None
         self.current_color = self.color
@@ -40,6 +43,26 @@ class Widget(ABC):
     @property
     def height(self) -> int:
         return self._height
+
+    @property
+    def x(self) -> int:
+        return self._x
+
+    @x.setter
+    def x(self, value: int):
+        if value != self._x:
+            self.mark_dirty()
+        self._x = value
+
+    @property
+    def y(self) -> int:
+        return self._y
+
+    @y.setter
+    def y(self, value: int):
+        if value != self._y:
+            self.mark_dirty()
+        self._y = value
 
     @property
     def current_color(self) -> Color | None:
