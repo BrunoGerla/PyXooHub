@@ -7,8 +7,8 @@ class Dashboard:
     A container that manages a collection of widgets.
     Handles updating, drawing, and lifecycle management of its children.
     """
-    def __init__(self, widgets: list[Widget] = [], background_color: ColorValue = Colors.BLACK):
-        self.widgets: list[Widget] = widgets
+    def __init__(self, widgets: list[Widget] | None = None, background_color: ColorValue = Colors.BLACK):
+        self.widgets: list[Widget] = widgets or []
         self.background_color: Color = Color.parse(background_color)
         self._is_dirty = True
 
